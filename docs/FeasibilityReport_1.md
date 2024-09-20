@@ -19,3 +19,19 @@
 ### 4.
 
 - Cost should not be an issue as this project will be using a remote desktop to store the image and then evaluate it using a machine learning program, which will then send the image back off. This eliminates the need to use a server which can get a bit pricy. This project won't necessarily eliminate any other costs from other processes that may be involved with it.
+
+### 5. 
+
+- There are many freely accessible products on the market that are similar to TrafficLouisville, and almost everyone with the required technology uses them while traveling roads unknown. These competitors, commonly known as Google Maps and Apple Maps, estimate traffic flow while users are engaged in navigation. Both products use the GPS data that is shared with the respective navigation software to track the speed of traffic flow (Apple, 2023). Google takes this a step further by saving this information and implementing A.I. to predict how traffic will accumulate based on previous trends (Lau, 2020). TrafficLouisville is not using real-time data, which leads one to think it could never hold a candle to the competition; however, this could not be further from the truth. These tech giants have overlooked the obvious fact that not every vehicle on the road has their software running. By utilizing the feeds from traffic cameras, TrafficLouisville can confidently claim that no car will be left behind. This increased accuracy of traffic flow estimation will surely draw in customers. 
+
+References: 
+
+Apple. (2023, December 11). Apple Legal. https://www.apple.com/legal/privacy/data/en/apple-maps/ 
+
+Lau, J. (2020, September 3). Google Maps 101: How AI helps predict traffic and determine routes. Google. https://blog.google/products/maps/google-maps-101-how-ai-helps-predict-traffic-and-determine-routes/
+
+
+### 6.
+
+- Many considerations have been made in both the business and technical aspects of TrafficLouisville's development. Most recently the team made the conscious decision to part together a server they could call their own rather than pay a monthly fee to rent one from another business. This was strictly a financial decision, renting a server would have cost the team anywhere from thirty dollars per month for a machine with no GPU to three hundred dollars per month for a machine with a GPU. Knowing that TrafficLouisville's ML component, YOLOv8, would gain a significant speedup from GPU acceleration the team decided to source their own parts as renting was out of their budget. For only fifteen dollars the team was able to build a GPU enabled server perfect for the job, repurposing spare machines and parts that had already been acquired. 
+- A technical consideration that had to be made was choosing the optimal machine learning component for image recognition. Two frontrunners were Cascade R-CNN and YOLOv8. Cascade R-CNN is known for high accuracy and precision, but this comes at a high cost of processing power and time. YOLOv8 on the other hand is known for its speed, versatility, and simplicity. Even if it may have lower accuracy than Cascade R-CNN, the team behind TrafficLouisville will be able to train their own custom models tailored to each camera and the possible weather conditions. Additionally, the speedup gained from utilizing YOLOv8 over Cascade R-CNN will make a significant impact on TrafficLouisville's speed and responsiveness. Currently, TrafficLouisville is planned to cover fifty-four traffic cameras around Louisville that update every ten seconds. If the backend cannot process this load within the timeframe then the software will phase out of sync with the cameras resulting in skipped frames of data. 
