@@ -47,7 +47,21 @@ This could be solved by training models with particular weights for a particular
 
 - decide on which project to do
 
+## 9/17/2024
+
+![image](https://github.com/user-attachments/assets/85fb54b0-dbbd-49ff-834a-96dc3be81432)
+
+Discussed plans for traffic project, split up responsibilities
+JB - server, manage hardware
+AO - manage training of yolov8 models
+MN - develop frontend application
+
+### Actionables:
+- get local development environments up and running
 
 
+## 9/24/2024
+- finish gathering camera list and descriptions
+- 
 
 
