@@ -78,7 +78,12 @@ results from yolov8 general model on highways in good conditions:
    - another option would include arguments to the model that tell it to only report results from a particular part of a picture
      	- this problem involves how we will be reporting data, is our heatmap reporting on traffic going directions or are we just saying that there is a lot of traffic on the highway at this point?
      	- if we implement multiple direction reporting, this will require organization on how the model is applied and how results are determined
-
+5. for training models, how many pictures will be needed to improve the model and therefore accuracy of results?
+   - first, we will collect a small number (10) of images from each camera for two conditions (day/night)
+   - second, we will select three cameras with a good view and generating weights via training for each of the cameras and condition (6 total sets of pictures)
+   - third, we will test the generic yolov8 versus the three models by predicting a test set of pictures
+6. how do we deal with abnormal events like construction or traffic accidents?
+   - the generic yolov8 models are capable of detecting people. we may be able to use this to signal to the heatmap that the results may be unreliable and show it on hte map
 
 ### Actionables:
 - finish gathering camera list and descriptions
