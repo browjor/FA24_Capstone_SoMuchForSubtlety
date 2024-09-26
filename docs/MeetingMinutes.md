@@ -85,6 +85,16 @@ results from yolov8 general model on highways in good conditions:
 6. how do we deal with abnormal events like construction or traffic accidents?
    - the generic yolov8 models are capable of detecting people. we may be able to use this to signal to the heatmap that the results may be unreliable and show it on hte map
 
+## Update:
+- KYTC has emailed us back and given permission for access of their resources with the following conditions:
+	- one image per 10 seconds from their servers
+   	- suggested long term storage is a BAD idea
+   	- all data is under Creative Commons Zero License and KYTC does not warrant the data
+   	- to communicate the following message very clearly:
+   	  ![image](https://github.com/user-attachments/assets/41a9cef9-ccdb-4b7a-abf4-656eb9d73e63)
+	- that we meet with their team and discuss what we've learned 
+
+
 ### Actionables:
 - finish gathering camera list and descriptions
 - generate training images for camera list
