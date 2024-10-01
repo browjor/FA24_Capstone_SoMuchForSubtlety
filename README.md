@@ -13,6 +13,8 @@ Our project is called TrafficLouisville, a system that aims to give timely infor
 - The backend server will download an image, and queue it for processing with machine learning, specifically Yolov8 image classification. In terms of preparing Yolov8 for classifying particular images, training will be needed to generate a set of model-weights for each specific camera viewpoint, and calibrated for day/night/rain conditions.
 - After an estimate of how many vehicles are on the road is compared with baselines and a density figure is generated, the server will send the data for a specific camera to the Vercel-hosted frontend. Here, a heat-map or other relevant map will show the data.
 - For the purpose of security, we plan on implementing a reverse proxy that will be used to secure the backend server and frontend.
+
+## This image does not reflect the current state of the project and is intended as a potential framework. Specifically, the request rate of images has been changed.
 ![image](https://github.com/user-attachments/assets/85fb54b0-dbbd-49ff-834a-96dc3be81432)
 
 

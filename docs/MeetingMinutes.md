@@ -92,7 +92,10 @@ results from yolov8 general model on highways in good conditions:
    	- all data is under Creative Commons Zero License and KYTC does not warrant the data
    	- to communicate the following message very clearly:
    	  ![image](https://github.com/user-attachments/assets/41a9cef9-ccdb-4b7a-abf4-656eb9d73e63)
-	- that we meet with their team and discuss what we've learned 
+	- that we meet with their team and discuss what we've learned
+ - After gathering training pictures, it was discovered that the TRIMARC cameras move, changing directions to face different parts of the highway, this has large implications for training the models
+ - Public KYTC server has "direction" on their listing of the info for different cameras, which could mean that we could find out what direction cameras are facing (but this needs to be tested manually by comparing the dataset and picture for a camera before and after moving)
+ - set up remote access for team members access to the local server
 
 
 ### Actionables:
