@@ -1,6 +1,6 @@
 import time
 import urllib.request
-from backend.camera_list import CameraList
+from backend.app.camera_list import CameraList
 from time import localtime
 from dotenv import load_dotenv
 import os
