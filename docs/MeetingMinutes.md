@@ -85,7 +85,7 @@ results from yolov8 general model on highways in good conditions:
 6. how do we deal with abnormal events like construction or traffic accidents?
    - the generic yolov8 models are capable of detecting people. we may be able to use this to signal to the heatmap that the results may be unreliable and show it on hte map
 
-## Update:
+### Update:
 - KYTC has emailed us back and given permission for access of their resources with the following conditions:
 	- one image per 10 seconds from their servers
    	- suggested long term storage is a BAD idea
@@ -97,6 +97,8 @@ results from yolov8 general model on highways in good conditions:
  - Public KYTC server has "direction" on their listing of the info for different cameras, which could mean that we could find out what direction cameras are facing (but this needs to be tested manually by comparing the dataset and picture for a camera before and after moving)
  - set up remote access for team members access to the local server
 
+#### Tentative Server Structure
+![image](https://github.com/user-attachments/assets/16b0ce00-bde7-490d-a464-2b696becea2a)
 
 ### Actionables:
 - finish gathering camera list and descriptions
@@ -104,3 +106,13 @@ results from yolov8 general model on highways in good conditions:
 - generate a chart of functions that govern the server and how the files will be structured
 
 
+## 10/1/2024
+### Updates:
+
+#### 10/2/2024
+- Met with Professor Clint Franklin in Geosciences, discussed access to public ArcGIS REST API and found solution that would reliably gather information about traffic cameras
+- Met with Professor Sexton about tentative server structure. Discussed potential changes including:
+	- Separating backend endpoint into the flask server
+   	- Separating database from flask server
+   	- Separating image processing and logic from flask server
+- Essentially splitting tentative flask server structure into their own applications
