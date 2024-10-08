@@ -121,6 +121,7 @@ results from yolov8 general model on highways in good conditions:
 
 ### 10/8/2024
 Completed:
+- Finished designating scope of the project
 - Finished SRS
 - Talked to Clint Franklin about accessing KYTC server, made progress and successfully accessed JSON data for traffic cameras
 - Met with Professor Sexton and discussed the design of the local processing
