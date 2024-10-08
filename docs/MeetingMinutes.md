@@ -116,3 +116,17 @@ results from yolov8 general model on highways in good conditions:
    	- Separating database from flask server
    	- Separating image processing and logic from flask server
 - Essentially splitting tentative flask server structure into their own applications
+
+
+
+### 10/8/2024
+Completed:
+- Finished SRS
+- Talked to Clint Franklin about accessing KYTC server, made progress and successfully accessed JSON data for traffic cameras
+- Met with Professor Sexton and discussed the design of the local processing
+- Reorganized design for local processing to split the components of our project apart
+
+#### Actionables in 2 weeks:
+- John: Finish coding framework for local processing, set up database
+- Mason: Finish learning about React application
+- Aaron: Finish training general model and apply model on hardware
