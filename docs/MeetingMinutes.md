@@ -123,7 +123,7 @@ results from yolov8 general model on highways in good conditions:
 Completed:
 - Finished designating scope of the project
 - Finished SRS
-- Talked to Clint Franklin about accessing KYTC server, made progress and successfully accessed JSON data for traffic cameras
+- Met with Clint Franklin about accessing KYTC server, made progress and successfully accessed JSON data for traffic cameras
 - Met with Professor Sexton and discussed the design of the local processing
 - Reorganized design for local processing to split the components of our project apart into semi-independent units
 
