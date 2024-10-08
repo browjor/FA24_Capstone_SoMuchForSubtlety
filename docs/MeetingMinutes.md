@@ -127,6 +127,9 @@ Completed:
 - Met with Professor Sexton and discussed the design of the local processing
 - Reorganized design for local processing to split the components of our project apart into semi-independent units
 
+#### Potential Changes:
+- Proposed accessing weather data to judge conditions
+
 #### Actionables in 2 weeks:
 - John: Finish coding framework for local processing, set up database
 - Mason: Finish learning about React application
