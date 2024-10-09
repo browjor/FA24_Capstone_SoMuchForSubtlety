@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey, DateTime
+from sqlalchemy import create_engine, Column, Integer, Double, String, Float, ForeignKey, DateTime, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 
 # Define the engine and Base
