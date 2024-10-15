@@ -1,6 +1,6 @@
 import time
 import urllib.request
-from backend.app.camera_list import CameraList
+from camera_list import *
 from urllib.error import ContentTooShortError
 from time import localtime
 from dotenv import load_dotenv
