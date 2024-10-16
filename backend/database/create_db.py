@@ -11,7 +11,7 @@ class CurrentCamera(Base):
     
     camera_id = Column(Integer, primary_key=True)
     cam_status = Column(Boolean, nullable=False)
-    snapshot = Column(String, unique=True)
+    snapshot = Column(String, nullable=True)
     latitude = Column(Float, nullable=False)
     longitude = Column(Float, nullable=False)
     last_update = Column(DateTime, nullable=False)
@@ -28,11 +28,11 @@ class OfficialCameraList(Base):
     state = Column(String, nullable=False)
     district = Column(Integer, nullable=False)
     county = Column(String, nullable=False)
-    highway = Column(String, nullable=False)
-    milemarker = Column(Double, nullable=False)
+    highway = Column(String, nullable=True)
+    milemarker = Column(Double, nullable=True)
     description = Column(String, nullable=False)
-    direction = Column(String, nullable=False)
-    snapshot = Column(String, nullable=False)
+    direction = Column(String, nullable=True)
+    snapshot = Column(String, nullable=True)
     latitude = Column(Float, nullable=False)
     longitude = Column(Float, nullable=False)
     updateTS = Column(Integer, nullable=False)
@@ -42,9 +42,12 @@ class TrafficCount(Base):
     __tablename__ = 'traffic_count'
     
     id = Column(Integer, primary_key=True, autoincrement=True)
+    cam_id = Column(Integer, ForeignKey('current_camera.camera_id'))
     traffic_count = Column(Integer, nullable=False)
+    traffic_time = Column(DateTime, nullable=False)
     max_traffic_count = Column(Integer, nullable=False)
-    update_time = Column(DateTime, nullable=False)
+    max_traffic_time = Column(DateTime, nullable=False)
+
     
 
 # Create the tables
