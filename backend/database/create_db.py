@@ -22,7 +22,7 @@ class OfficialCameraList(Base):
     __tablename__ = 'official_camera_list'
     
     oid = Column(Integer, primary_key=True)
-    id = Column(Integer, ForeignKey('current_camera.camera_id'))
+    id = Column(Integer, nullable=False)
     name = Column(String, nullable=False)
     status = Column(String, nullable=False)
     state = Column(String, nullable=False)
@@ -42,7 +42,7 @@ class TrafficCount(Base):
     __tablename__ = 'traffic_count'
     
     id = Column(Integer, primary_key=True, autoincrement=True)
-    cam_id = Column(Integer, ForeignKey('current_camera.camera_id'))
+    cam_id = Column(Integer, nullable=False)
     traffic_count = Column(Integer, nullable=False)
     traffic_time = Column(DateTime, nullable=False)
     max_traffic_count = Column(Integer, nullable=False)
