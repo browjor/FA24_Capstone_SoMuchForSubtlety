@@ -12,7 +12,7 @@ if off_cam_data is HTTPError or off_cam_data is int:
     print("Error")
 else:
     #create connection to db
-    engine = create_engine('sqlite:///my_database.db')
+    engine = create_engine('sqlite:///C:/Users/johnb/PycharmProjects/FA24_Capstone_SoMuchForSubtlety/backend/database/my_database.db')
     Session = sessionmaker(bind=engine)
     session = Session()
 

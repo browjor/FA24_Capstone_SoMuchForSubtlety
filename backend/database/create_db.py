@@ -2,7 +2,7 @@ from sqlalchemy import create_engine, Column, Integer, Double, String, Float, Fo
 from sqlalchemy.ext.declarative import declarative_base
 
 # Define the engine and Base
-engine = create_engine('sqlite:///my_database.db')
+engine = create_engine('sqlite:///C:/Users/johnb/PycharmProjects/FA24_Capstone_SoMuchForSubtlety/backend/database/my_database.db')
 Base = declarative_base()
 
 # Define tables
@@ -10,7 +10,7 @@ class CurrentCamera(Base):
     __tablename__ = 'current_camera'
     
     camera_id = Column(Integer, primary_key=True)
-    cam_status = Column(Boolean, nullable=False)
+    cam_status = Column(String, nullable=False)
     snapshot = Column(String, nullable=True)
     latitude = Column(Float, nullable=False)
     longitude = Column(Float, nullable=False)

@@ -26,4 +26,4 @@ for i in range(2):
             continue
 
         time.sleep(15)
-    time.sleep(10)
+    time.sleep(15)
