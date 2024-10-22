@@ -9,16 +9,24 @@ engine = create_engine('sqlite:///C:/Users/johnb/PycharmProjects/FA24_Capstone_S
 
 def wait_until_time_is_up(start_time):
     end_time = time.time() - start_time
-    while end_time <= 9:
+    while end_time <= 10:
         time.sleep(1)
         end_time = time.time() - start_time
     return
 
 
-while True:
+#for demo purposes
+i = 0
+
+while True and i<110:
+    #start timer
     start_time = time.time()
+
+    #starting and closing session each loop to ensure SQL writes are finished each loop
     Session = sessionmaker(bind=engine)
     session = Session()
+
+    #getting the last updated camera
     oldest_camera = session.query(CurrentCamera).order_by(asc(CurrentCamera.last_update)).first()
 
     #if camera doesn't have a link (which is possible), mark as updated in db and continue (we haven't requested image yet)
@@ -30,11 +38,12 @@ while True:
 
     #this request replaces the old picture in the temp_storage_path
     try:
-        urllib.request.urlretrieve(oldest_camera.snapshot, oldest_camera.temp_storage_path)
+        urllib.request.urlretrieve(oldest_camera.snapshot, oldest_camera.temp_storage_path+'\\current.png')
 
+    # logic for handling ContentTooShortError which happens randomly
     except ContentTooShortError as e:
         print(e, "Error")
-        #logic for handling ContentTooShortError which happens randomly
+        #making it updated so the loop won't come back to it
         oldest_camera.last_update = datetime.now()
         session.commit()
         session.close()
@@ -62,17 +71,39 @@ while True:
     #placeholder for results
     model_results = 5
 
-    #if results are higher than the historical max, make the current result the historical max
-    historical = session.query(TrafficCount).order_by(asc(TrafficCount.traffic_time)).first()
+    #get the last updated entry for camera from traffic_count table
 
+    historical = session.query(TrafficCount).filter(TrafficCount.cam_id == oldest_camera.camera_id).order_by(asc(TrafficCount.traffic_time)).first()
+    current_datetime = datetime.now()
+    #if the traffic is higher than the historical max, replace the historical max
     if historical.max_traffic_count<model_results:
         current_traffic_count = TrafficCount(
-            cam_id=
+            cam_id=oldest_camera.camera_id,
+            traffic_count = model_results,
+            traffic_time=current_datetime,
+            max_traffic_count=model_results,
+            max_traffic_time=current_datetime
         )
+        session.add(current_traffic_count)
+        session.commit()
+    else:
+        current_traffic_count = TrafficCount(
+            cam_id=oldest_camera.camera_id,
+            traffic_count=model_results,
+            traffic_time=current_datetime,
+            max_traffic_count=historical.max_traffic_count,
+            max_traffic_time=historical.max_traffic_time
+        )
+        session.add(current_traffic_count)
+        session.commit()
 
-
-
+    #update the db with update time in current_cams
+    oldest_camera.last_update = current_datetime
+    session.commit()
     #upon successful loop, close the db session and wait until time is up
     session.close()
     wait_until_time_is_up(start_time)
+    i+=1
+
+
 
