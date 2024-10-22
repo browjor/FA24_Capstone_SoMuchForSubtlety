@@ -48,7 +48,5 @@ class TrafficCount(Base):
     max_traffic_count = Column(Integer, nullable=False)
     max_traffic_time = Column(DateTime, nullable=False)
 
-    
-
 # Create the tables
 Base.metadata.create_all(engine)
