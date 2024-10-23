@@ -134,3 +134,22 @@ Completed:
 - John: Finish coding framework for local processing, set up database
 - Mason: Finish learning about React application
 - Aaron: Finish training general model and apply model on hardware
+
+
+### 10/22/2024
+Completed:
+- Finished basic framework including main loop, database, and auxiliary programs to populate database, including the database functions used in local programs
+- Finished learning about react framework, including setting up sample Vercel hosting for a webpage
+- Finished training a daylight model, successfully applied model and produced results on local hardware
+- Tested GPU versus CPU utilization on model and concluded that CPU may be acceptable, results pending
+- Finished script to automate pulling camera information from ArcGIS server and for backing up and keeping the size of the database down
+
+### Potential Changes:
+- Emailed KYTC about data involving camera orientation and zoom level, according to them the data is inaccessible and they suggested using frame references to solve the problem
+
+#### Actionables in 1 Week:
+- Complete RF3
+- John: Get main loop running with model included
+- Mason: Develop the displayed webpage
+- Aaron: Finish annotating the "night" dataset
+
