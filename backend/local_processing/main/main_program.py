@@ -5,8 +5,10 @@ from sqlalchemy.orm import sessionmaker
 import urllib.request
 from urllib.error import ContentTooShortError, HTTPError
 from datetime import datetime
-engine = create_engine('sqlite:///C:/Users/johnb/PycharmProjects/FA24_Capstone_SoMuchForSubtlety/backend/database/my_database.db')
+from backend.local_processing.models.YOLOv8 import process_image,extract_data
 
+
+engine = create_engine('sqlite:///C:/Users/johnb/PycharmProjects/FA24_Capstone_SoMuchForSubtlety/backend/database/my_database.db')
 def wait_until_time_is_up(start_time):
     end_time = time.time() - start_time
     while end_time <= 10:
@@ -18,7 +20,7 @@ def wait_until_time_is_up(start_time):
 #for demo purposes
 i = 0
 
-while True and i<110:
+while True and i<100:
     #start timer
     start_time = time.time()
 
@@ -67,16 +69,24 @@ while True and i<110:
 
     #apply model to image and get results
     #do any calculations required for model to get results
-
-    #placeholder for results
-    model_results = 5
-
+    data = process_image(oldest_camera.temp_storage_path+'\\current.png')
+    model_results = extract_data(data)
     #get the last updated entry for camera from traffic_count table
 
-    historical = session.query(TrafficCount).filter(TrafficCount.cam_id == oldest_camera.camera_id).order_by(asc(TrafficCount.traffic_time)).first()
     current_datetime = datetime.now()
+    historical = session.query(TrafficCount).filter(TrafficCount.cam_id == oldest_camera.camera_id).order_by(asc(TrafficCount.traffic_time)).first()
+    if historical is None:
+        current_traffic_count = TrafficCount(
+            cam_id=oldest_camera.camera_id,
+            traffic_count=model_results,
+            traffic_time=current_datetime,
+            max_traffic_count=model_results,
+            max_traffic_time=current_datetime
+        )
+        session.add(current_traffic_count)
+        session.commit()
     #if the traffic is higher than the historical max, replace the historical max
-    if historical.max_traffic_count<model_results:
+    elif historical.max_traffic_count<model_results:
         current_traffic_count = TrafficCount(
             cam_id=oldest_camera.camera_id,
             traffic_count = model_results,

@@ -17,9 +17,9 @@ for camera in all_cameras:
         current_timestamp = datetime.now()
         traffic_count = TrafficCount(
             cam_id=camera.camera_id,
-            traffic_count = 100,
+            traffic_count = 10,
             traffic_time = current_timestamp,
-            max_traffic_count= 100,
+            max_traffic_count= 10,
             max_traffic_time= current_timestamp
         )
         session.add(traffic_count)
