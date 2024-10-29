@@ -20,7 +20,7 @@ def wait_until_time_is_up(start_time):
 #for demo purposes
 i = 0
 
-while True and i<100:
+while True and i<309:
     #start timer
     start_time = time.time()
 
