@@ -154,7 +154,10 @@ Completed:
 - Aaron: Finish annotating the "night" dataset
 
 
-
+### 10/29/2024
+Completed:
+- Completed RF3
+- 
 
 
 #### Actionables in 2 Weeks
