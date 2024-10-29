@@ -153,3 +153,11 @@ Completed:
 - Mason: Develop the displayed webpage
 - Aaron: Finish annotating the "night" dataset
 
+
+
+
+
+#### Actionables in 2 Weeks
+- John: Incorporate the night model, get the backend working on the local hardware server
+- Mason: Get the website up and get a skeleton going
+- Aaron: Evaluate results for nighttime model, maybe try pretrained models
