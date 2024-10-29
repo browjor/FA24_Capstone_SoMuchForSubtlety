@@ -14,9 +14,10 @@ Our project is called TrafficLouisville, a system that aims to give timely infor
 - After an estimate of how many vehicles are on the road is compared with baselines and a density figure is generated, the server will send the data for a specific camera to the Vercel-hosted frontend. Here, a heat-map or other relevant map will show the data.
 - For the purpose of security, we plan on implementing a reverse proxy that will be used to secure the backend server and frontend.
 
-## This image does not reflect the current state of the project and is intended as a potential framework. Specifically, the request rate of images has been changed.
-![image](https://github.com/user-attachments/assets/85fb54b0-dbbd-49ff-834a-96dc3be81432)
+- 
+![RF3_ComponentDiagram drawio](https://github.com/user-attachments/assets/7fa235c9-0c6b-449c-bf97-b6e43ee4bf0d)
 
+![DeploymentDiagram_2 drawio](https://github.com/user-attachments/assets/fa36cba8-bb24-4693-bbad-12a2554c075c)
 
 
 

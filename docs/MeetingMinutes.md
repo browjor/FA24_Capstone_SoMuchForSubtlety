@@ -153,3 +153,15 @@ Completed:
 - Mason: Develop the displayed webpage
 - Aaron: Finish annotating the "night" dataset
 
+
+### 10/29/2024
+Completed:
+- Completed RF3
+- Main backend with simple model functionality has been tested for a runtime of an hour
+- Deployed an empty website on Vercel
+- Trained a nighttime model with annotated images
+
+#### Actionables in 2 Weeks
+- John: Incorporate the night model, get the backend working on the local hardware server
+- Mason: Get the website up and get a skeleton going
+- Aaron: Evaluate results for nighttime model, maybe try pretrained models
