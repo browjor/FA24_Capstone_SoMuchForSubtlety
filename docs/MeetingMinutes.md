@@ -157,8 +157,9 @@ Completed:
 ### 10/29/2024
 Completed:
 - Completed RF3
-- 
-
+- Main backend with simple model functionality has been tested for a runtime of an hour
+- Deployed an empty website on Vercel
+- Trained a nighttime model with annotated images
 
 #### Actionables in 2 Weeks
 - John: Incorporate the night model, get the backend working on the local hardware server
