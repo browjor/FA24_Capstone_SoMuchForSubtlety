@@ -1,56 +1,59 @@
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from flask_restful import Resource, Api, reqparse, marshal_with,fields, abort
+from flask_restful import Resource, Api, marshal_with, fields, abort
+from backend.database.create_db import TrafficCount, OfficialCameraList  # Import models only
+from sqlalchemy import create_engine, desc
+from sqlalchemy.orm import sessionmaker
 
+engine = create_engine('sqlite:///C:/Users/johnb/PycharmProjects/FA24_Capstone_SoMuchForSubtlety/backend/database/my_database.db')
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
-db = SQLAlchemy(app)
+api = Api(app)
 
-
-api=Api(app)
-user_args = reqparse.RequestParser()
-user_args.add_argument('cam_ID', required=True, type=int, help='Camera ID must not be blank')
-
-#format of output JSON
 dataFields = {
     'id': fields.Integer,
     'density': fields.Float,
-    'lattitude': fields.Float,
+    'latitude': fields.Float,
     'longitude': fields.Float
 }
 
 
-#defines what happens when a GET request is received
-class Camera(Resource):
+class LatestTrafficData(Resource):
     @marshal_with(dataFields)
-    def get(self, cam_id):
-        #logic for sending cam id to function that requests image
+    def get(self):
+        with app.app_context():
+            Session = sessionmaker(bind=engine)
+            session = Session()
 
-        #logic for sending image to yolov8
+            # getting the last updated camera
+            recent_traffic = session.query(TrafficCount).order_by(desc(TrafficCount.traffic_time)).first()
 
-        #logic for putting results of yolov8 into database
+            if not recent_traffic:
+                abort(404, message="No traffic data found.")
 
-        #logic for getting updated data on that camera
-        data = CameraModel.query.filter_by(cam_id=cam_id).first()
+            camera_info = session.query(OfficialCameraList).filter_by(id=recent_traffic.cam_id).first()
 
-        if not data:
-            abort(404)
-        return data
+            if not camera_info:
+                abort(404, message="Camera information not found for the given cam_id.")
 
-api.add_resource(Camera, '/<int:cam_id>')
+            density = recent_traffic.traffic_count / recent_traffic.max_traffic_count if recent_traffic.max_traffic_count else 0
+
+            result = {
+                'id': recent_traffic.cam_id,
+                'density': density,
+                'latitude': camera_info.latitude,
+                'longitude': camera_info.longitude
+            }
+            session.commit()
+            session.close()
+            return result
 
 
-#defines the database model for cameras
-class CameraModel(db.Model):
-    cam_ID = db.Column(db.Integer, primary_key=True)
-    cam_descr = db.Column(db.String(300), unique=True, nullable=False)
-    cam_url = db.Column(db.String(80), unique=True, nullable=False)
+api.add_resource(LatestTrafficData, '/latest-traffic')
 
-    def __repr__(self):
-        return f"Camera ID = {self.cam_ID}"
+
 @app.route('/')
 def home():
     return 'Hello, Flask!'
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
