@@ -165,3 +165,11 @@ Completed:
 - John: Incorporate the night model, get the backend working on the local hardware server
 - Mason: Get the website up and get a skeleton going
 - Aaron: Evaluate results for nighttime model, maybe try pretrained models
+
+### 11/12/2024
+Completed:
+- RF4
+
+- John: Collected training images for night-rain conditions, annotated rain condition images for rain-model, finished server endpoint functionality without reverse proxy implementation, worked on RF4
+- Mason: Worked on putting map on website, and frontend section of RF4
+- Aaron: Finished nighttime model, applied grayscale/blur to training images for models, worked on model section of RF4
