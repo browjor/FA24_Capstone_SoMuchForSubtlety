@@ -1,6 +1,4 @@
-import numpy as np
 import cv2
-from PIL import Image
 
 #code ripped from https://inside-machinelearning.com/en/bounding-boxes-python-function/
 
@@ -23,12 +21,7 @@ def box_label(image, box, label='', color=(128, 128, 128), txt_color=(255, 255, 
                 lineType=cv2.LINE_AA)
 
 
-def plot_bboxes(image_name, boxes, labels=[], colors=[], score=True, conf=None):
-
-    #added these lines to format the image correctly
-    image = Image.open(image_name)
-    image = np.asarray(image)
-    image = image.copy()
+def plot_bboxes(image, boxes, labels=[], colors=[], score=True, conf=None):
 
     # Define COCO Labels
     if labels == []:
@@ -82,7 +75,6 @@ def plot_bboxes(image_name, boxes, labels=[], colors=[], score=True, conf=None):
             box_label(image, box, label, color)
 
     # show image
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     cv2.imshow("detections", image)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
