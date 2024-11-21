@@ -3,8 +3,10 @@ from sqlalchemy.orm import sessionmaker
 import os, time
 from create_db import CurrentCamera, TrafficCount
 from datetime import datetime
+from dotenv import load_dotenv
 
-engine = create_engine('sqlite:///C:/Users/johnb/PycharmProjects/FA24_Capstone_SoMuchForSubtlety/backend/database/my_database.db')
+load_dotenv()
+engine = create_engine(os.getenv('SQLite_DB_LOC'))
 Session = sessionmaker(bind=engine)
 session = Session()
 

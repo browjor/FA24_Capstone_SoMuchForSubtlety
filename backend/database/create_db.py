@@ -1,8 +1,11 @@
 from sqlalchemy import create_engine, Column, Integer, Double, String, Float, ForeignKey, DateTime, Boolean
 from sqlalchemy.ext.declarative import declarative_base
-
+import os
+from dotenv import load_dotenv
 # Define the engine and Base
-engine = create_engine('sqlite:///C:/Users/johnb/PycharmProjects/FA24_Capstone_SoMuchForSubtlety/backend/database/my_database.db')
+
+load_dotenv()
+engine = create_engine = create_engine(os.getenv('SQLite_DB_LOC'))
 Base = declarative_base()
 
 # Define tables
