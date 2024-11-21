@@ -1,17 +1,17 @@
-  # Assuming TrafficCount is defined in this file
+from flask.cli import load_dotenv  # Assuming TrafficCount is defined in this file
 def backup_db():
     import csv
     import os
     from sqlalchemy import desc, create_engine
     from sqlalchemy.orm import sessionmaker
     from create_db import TrafficCount
-
-    engine = create_engine('sqlite:///C:/Users/johnb/PycharmProjects/FA24_Capstone_SoMuchForSubtlety/backend/database/my_database.db')
+    load_dotenv()
+    engine = create_engine(os.getenv('SQLite_DB_LOC'))
     Session = sessionmaker(bind=engine)
     session = Session()
 
     # Path for the CSV file to store older records
-    csv_file_path = "C:\\Users\\johnb\\PycharmProjects\\FA24_Capstone_SoMuchForSubtlety\\backend\\database\\DB_BACKUP.csv"
+    csv_file_path = os.getenv('DB_BACKUP_PATH')
 
     # Step 1: Query the TrafficCount table and sort by update_time in descending order (newest first)
     total_entries = session.query(TrafficCount).count()

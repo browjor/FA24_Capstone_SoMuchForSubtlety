@@ -2,16 +2,18 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.functions import current_timestamp
 import os, time
-
+from dotenv import load_dotenv
 from create_db import OfficialCameraList, CurrentCamera
 from datetime import datetime
 
-engine = create_engine('sqlite:///C:/Users/johnb/PycharmProjects/FA24_Capstone_SoMuchForSubtlety/backend/database/my_database.db')
+load_dotenv()
+
+engine = create_engine(os.getenv('SQLite_DB_LOC'))
 Session = sessionmaker(bind=engine)
 session = Session()
 
 all_cameras=session.query(OfficialCameraList).all()
-temp_storage_paths = 'C:\\Users\\johnb\\PycharmProjects\\FA24_Capstone_SoMuchForSubtlety\\backend\\local_processing\\temp_storage\\'
+temp_storage_paths = os.getenv('TEMP_PIC_ROOT')
 
 for camera in all_cameras:
     current_camera = CurrentCamera(
@@ -21,7 +23,7 @@ for camera in all_cameras:
         latitude=camera.latitude,
         longitude=camera.longitude,
         last_update=datetime.now(),
-        temp_storage_path=(temp_storage_paths+str(camera.id)),
+        temp_storage_path=(temp_storage_paths+"\\"+str(camera.id)),
         conditions="Sunny"
     )
     session.add(current_camera)
