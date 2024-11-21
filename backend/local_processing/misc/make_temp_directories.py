@@ -13,7 +13,7 @@ session = Session()
 all_cameras=session.query(OfficialCameraList).all()
 
 for camera in all_cameras:
-    subdirectory_path = base_directory + '\\' + str(camera[0])
+    subdirectory_path = base_directory + '\\' + str(camera.id)
     os.makedirs(subdirectory_path)
 
 session.commit()
