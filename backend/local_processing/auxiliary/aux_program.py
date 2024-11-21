@@ -2,7 +2,6 @@ import requests
 from dotenv import load_dotenv
 import os
 from requests import HTTPError
-from backend.database.create_db import OfficialCameraList
 
 load_dotenv()
 request_string = os.getenv("MAP_SERVER_REQUEST")

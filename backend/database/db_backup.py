@@ -5,7 +5,6 @@ def backup_db():
     from sqlalchemy import desc, create_engine
     from sqlalchemy.orm import sessionmaker
     from create_db import TrafficCount
-    import dotenv
     load_dotenv()
     engine = create_engine(os.getenv('SQLite_DB_LOC'))
     Session = sessionmaker(bind=engine)

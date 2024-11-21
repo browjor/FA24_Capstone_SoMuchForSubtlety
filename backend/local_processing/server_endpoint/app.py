@@ -3,8 +3,11 @@ from flask_restful import Resource, Api, marshal_with, fields, abort
 from backend.database.create_db import TrafficCount, OfficialCameraList  # Import models only
 from sqlalchemy import create_engine, desc
 from sqlalchemy.orm import sessionmaker
+from dotenv import load_dotenv
+import os
 
-engine = create_engine('sqlite:///C:/Users/johnb/PycharmProjects/FA24_Capstone_SoMuchForSubtlety/backend/database/my_database.db')
+load_dotenv()
+engine = create_engine(os.getenv('SQLite_DB_LOC'))
 app = Flask(__name__)
 api = Api(app)
 
