@@ -181,4 +181,4 @@ Completed:
 
 - John: Transferred backend to dedicated hardware, some errors but mostly functional, collected training images for snow conditions, annotated images
 - Mason: 
-- Aaron: 
+- Aaron: Ensured 100% accurate annotations in the validate and test subsets of the daytime and nighttime models. Implemented preprocessing functions in object detection component, and improved the interface with backend component. AB tested the accuracy of the daytime and nighttime models trained on datasets preprocessed with various levels of blur as well as grayscale. 
