@@ -173,3 +173,12 @@ Completed:
 - John: Collected training images for night-rain conditions, annotated rain condition images for rain-model, finished server endpoint functionality without reverse proxy implementation, worked on RF4
 - Mason: Worked on putting map on website, and frontend section of RF4
 - Aaron: Finished nighttime model, applied grayscale/blur to training images for models, worked on model section of RF4
+
+
+### 12/3/2024
+Completed:
+- RF5
+
+- John: Transferred backend to dedicated hardware, some errors but mostly functional, collected training images for snow conditions, annotated images
+- Mason: 
+- Aaron: 
