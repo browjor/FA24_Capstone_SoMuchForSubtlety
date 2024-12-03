@@ -1,9 +1,9 @@
 {
-  "name": "next-leaflet-starter",
-  "homepage": "https://next-leaflet-starter.netlify.app",
+  "name": "traffic-louisville",
+  "homepage": "https://trafficlouisville.vercel.app/",
   "version": "0.1.0",
-  "license": "MIT",
-  "author": "Colby Fayock <hello@colbyfayock.com>",
+  "license": "",
+  "author": "Mason Napper",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -12,10 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/colbyfayock/next-leaflet-starter"
-  },
-  "bugs": {
-    "url": "https://github.com/colbyfayock/next-leaflet-starter/issues"
+    "url": "https://github.com/browjor/FA24_Capstone_SoMuchForSubtlety"
   },
   "dependencies": {
     "copy-webpack-plugin": "^11.0.0",
