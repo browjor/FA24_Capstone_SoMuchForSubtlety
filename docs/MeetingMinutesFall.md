@@ -1,4 +1,4 @@
-# Meeting Minutes
+# Meeting Minutes Fall Semester
 
 ## 9/3/2024
 Talk to sexton about tech stack on traffic project
