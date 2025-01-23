@@ -19,7 +19,8 @@ class CurrentCamera(Base):
     longitude = Column(Float, nullable=False)
     last_update = Column(DateTime, nullable=False)
     temp_storage_path = Column(String, nullable=False)
-    conditions = Column(String, nullable=False)
+    conditions = Column(Integer, nullable=False)
+    zone = Column(Integer, nullable=False)
 
 class OfficialCameraList(Base):
     __tablename__ = 'official_camera_list'

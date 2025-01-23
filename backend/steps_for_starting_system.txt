@@ -2,6 +2,7 @@
 2. run create_db.py
 3. run load_initial_official_cams.py (deletes OfficialCameraTable - beware)
 4. run load_initial_current_cams.py
+4.1 run create_cam_weather_zones.py
 5. run make_temp_directories.py
 6. (OPTIONAL) run load_estimated_traffic_count.py --- this was a problem, now it isn't really needed because of functionality in the main loop
 7. TBC

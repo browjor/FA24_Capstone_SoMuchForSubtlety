@@ -24,10 +24,10 @@ for camera in all_cameras:
         longitude=camera.longitude,
         last_update=datetime.now(),
         temp_storage_path=(temp_storage_paths+"\\"+str(camera.id)),
-        conditions="Sunny"
+        conditions=0,
+        zone=0
     )
     session.add(current_camera)
-    time.sleep(1)
 
 session.commit()
 

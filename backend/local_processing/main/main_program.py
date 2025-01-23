@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker
 import urllib.request
 from urllib.error import ContentTooShortError, HTTPError
 from datetime import datetime
-from backend.local_processing.models.YOLOv8 import process_image,extract_data
+from backend.local_processing.models.YOLOv8 import process_image
 from dotenv import load_dotenv
 import os
 
@@ -72,8 +72,7 @@ while True and i<309:
 
     #apply model to image and get results
     #do any calculations required for model to get results
-    data = process_image(oldest_camera.temp_storage_path+'\\current.png')
-    model_results = extract_data(data)
+    model_results = process_image(oldest_camera.temp_storage_path+'\\current.png', (os.getenv('MODEL_PATH_1')))
     #get the last updated entry for camera from traffic_count table
 
     current_datetime = datetime.now()
