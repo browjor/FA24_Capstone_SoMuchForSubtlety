@@ -1,4 +1,10 @@
 async function fetchTrafficData() {
+
+    if (process.env.SEND_REQUESTS !== "true") {
+        console.log("Requests are disabled. Skipping data fetch.");
+        return null;  // Do not fetch if SEND_REQUESTS is not "true"
+    }
+    
     const sharedSecret = "SHARED_KEY";
     const endpoint = "https://your-backend-domain.com/latest-traffic";
 
