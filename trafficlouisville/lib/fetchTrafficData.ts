@@ -4,12 +4,12 @@ async function fetchTrafficData() {
         console.log("Requests are disabled. Skipping data fetch.");
         return null;  // Do not fetch if SEND_REQUESTS is not "true"
     }
-    
+
     const sharedSecret = "SHARED_KEY";
-    const endpoint = "https://your-backend-domain.com/latest-traffic";
+    const endpoint = "https://BACKEND_SERVER_IPV4/BACKEND_SERVER_PORT";
 
     const method = "GET";
-    const apiPath = "/latest-traffic";
+    const apiPath = "/BACKEND_SERVER_PORT";
     const timestamp = Math.floor(Date.now() / 1000).toString();
     const message = `${method} ${apiPath} ${timestamp}`;
 
