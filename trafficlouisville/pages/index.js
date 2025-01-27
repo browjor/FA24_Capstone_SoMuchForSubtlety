@@ -1,5 +1,4 @@
 import Head from 'next/head';
-
 import Layout from 'src/components/Layout';
 import Section from 'src/components/Section';
 import Container from 'src/components/Container';
@@ -16,14 +15,11 @@ export default function Home() {
       <Head>
         <title>TrafficLouisville</title>
         <meta name="description" content="See heatmaps of traffic in Louisville with KYTC camera data" />
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="/trafficlight.ico" />
       </Head>
 
       <Section>
         <Container>
-          <h1 className={styles.title}>
-            TrafficLouisville
-          </h1>
 
           <Map className={styles.homeMap} width="800" height="400" center={DEFAULT_CENTER} zoom={12}>
             {({ TileLayer, Marker, Popup }) => (
@@ -32,21 +28,16 @@ export default function Home() {
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                   attribution="&copy; <a href=&quot;http://osm.org/copyright&quot;>OpenStreetMap</a> contributors"
                 />
-                <Marker position={DEFAULT_CENTER}>
-                  <Popup>
-                    Heck yeah <br /> I got a website
-                  </Popup>
-                </Marker>
               </>
             )}
           </Map>
 
           <p className={styles.description}>
-            <code className={styles.code}>KYTC Stuff</code>
+            This is a research/experimental effort. For authoritative real-time traffic information, please go to <a href="https://goky.ky.gov/" target="_blank" rel="noopener noreferrer" style={{ color: "blue", textDecoration: "underline" }}>GoKY</a>.
           </p>
 
           <p className={styles.view}>
-            <Button href="https://github.com/browjor/FA24_Capstone_SoMuchForSubtlety.git">Vew on GitHub</Button>
+            <Button href="https://github.com/browjor/FA24_Capstone_SoMuchForSubtlety.git">View Project on GitHub</Button>
           </p>
         </Container>
       </Section>
