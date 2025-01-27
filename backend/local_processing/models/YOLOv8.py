@@ -2,7 +2,7 @@ from ultralytics import YOLO
 import cv2
 import math
 
-enable_local_testing = True
+enable_local_testing = False
 
 if enable_local_testing:
     # pytorch version must be compatible with CUDA driver:
@@ -75,8 +75,8 @@ def process_image(image_path, model_weights_path):
     data = extract_vehicle_count(detections)
     return data
 
-if enable_local_testing:
-    for image in os.listdir(images_directory):
-        if image.endswith('.png'):
-            data = process_image(images_directory + image, model_weights_path)
-            print(data)
+#if enable_local_testing:
+#    for image in os.listdir(images_directory):
+#        if image.endswith('.png'):
+#            data = process_image(images_directory + image, model_weights_path)
+#            print(data)

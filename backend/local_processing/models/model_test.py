@@ -1,6 +1,6 @@
-from YOLOv8 import process_image, extract_data
+from YOLOv8 import process_image
 
-test = process_image('C:\\Users\\johnb\\PycharmProjects\\FA24_Capstone_SoMuchForSubtlety\\backend\\local_processing\\temp_storage\\31\\current.png')
+test = process_image('C:\\Users\\johnb\\PycharmProjects\\FA24_Capstone_SoMuchForSubtlety\\backend\\local_processing\\temp_storage\\31\\current.png','C:\\Users\\johnb\\PycharmProjects\\FA24_Capstone_SoMuchForSubtlety\\backend\\local_processing\\models\\daytimeBest.pt')
 
 
-print(extract_data(test))
+print(test)
