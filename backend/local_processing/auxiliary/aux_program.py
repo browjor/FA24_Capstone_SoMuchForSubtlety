@@ -47,10 +47,7 @@ def prepare_changes_in_cam_info(data):
                                  feature[0]['attributes']['oid'],
                                  feature[0]['attributes']['status']])
 
-    #get records from official_camera_list_table as object and compare
-    #if offline or online in BOTH do nothing
-    #if offline in response and online in database, change database to reflect
-    #if online in response and offline in database, change database to reflect
+
 
 
 def process_daily_weather_request(data, retry=5):
