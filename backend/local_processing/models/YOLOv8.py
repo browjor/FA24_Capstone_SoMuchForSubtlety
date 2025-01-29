@@ -1,23 +1,13 @@
 from ultralytics import YOLO
 import cv2
 import math
+from backend.local_processing.models.BoundingBoxes import plot_bboxes
+import torch
 
 enable_local_testing = False
-
-if enable_local_testing:
-    # pytorch version must be compatible with CUDA driver:
-    # https://pytorch.org/get-started/locally/
-    # https://developer.nvidia.com/cuda-11-8-0-download-archive?target_os=Windows&target_arch=x86_64&target_version=11&target_type=exe_network
-    import torch
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    import os
-    from BoundingBoxes import plot_bboxes
-    model_weights_path = './datasets/DaytimeDatasetYolov8n/best.pt'
-    images_directory = './DaytimeImages/'
-
-sigma = 2
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+sigma = 1
 kernel_size = int(2 * math.ceil(2 * sigma) + 1)
-
 confidence = 0.3
 
 enable_blur = False
@@ -27,6 +17,9 @@ def set_preprocessing_flags(model_weights_path):
     global enable_blur, enable_grayscale
     if "daytime" in model_weights_path.lower():
         enable_blur = False
+        enable_grayscale = False
+    elif "nighttime" in model_weights_path.lower():
+        enable_blur = True
         enable_grayscale = False
     return
 
@@ -54,8 +47,7 @@ def preprocess_image(image):
 
 def infer(image, model_weights_path):
     model = YOLO(model_weights_path)
-    if enable_local_testing:
-        model = model.to(device)
+    model = model.to(device)
     results = model(image)
     return results[0].boxes.data
 
