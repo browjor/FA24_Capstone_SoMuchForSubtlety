@@ -5,7 +5,7 @@
   "license": "",
   "author": "Mason Napper",
   "scripts": {
-    "dev": "next dev",
+    "dev": "set NODE_EXTRA_CA_CERTS=C:\\Users\\johnb\\AppData\\Roaming\\Caddy\\pki\\authorities\\local\\root.crt && next dev",
     "build": "next build",
     "export": "next export",
     "start": "next start",
