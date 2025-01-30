@@ -9,8 +9,8 @@ import os, json, time, hmac, hashlib
 load_dotenv()
 engine = create_engine(os.getenv('SQLite_DB_LOC'))
 SHARED_SECRET = os.getenv('SHARED_SECRET')
-server_ipv4 = os.getenv('SERVER_PORT')
-server_port = int(os.getenv('SERVER_IPV4'))
+server_ipv4 = os.getenv('SERVER_IPV4')
+server_port = int(os.getenv('SERVER_PORT'))
 app = Flask(__name__)
 api = Api(app)
 
@@ -23,10 +23,13 @@ dataFields = {
 
 def verify_request_signature(headers):
     signature = headers.get("X-Signature")
+    print(signature)
     message = headers.get("X-Message")
+    print(message)
 
     #if malformed
     if not signature or not message:
+        print("No signature or no message")
         abort(403)
 
     #create server version
@@ -36,18 +39,22 @@ def verify_request_signature(headers):
         hashlib.sha256
     ).hexdigest()
 
+    print(expected_signature)
+
     # get time value, see if it matches, prevent replay attacks
     try:
-        method, endpoint, timestamp = message.split(" ")
+        method, timestamp = message.split(" ")
         timestamp = int(timestamp)  # Convert timestamp to integer
         current_time = int(time.time())
         if -15 < abs(current_time - timestamp) < 15:
-            abort(403)
+            print(str(abs(current_time - timestamp)))
     except (ValueError, AttributeError):
+        print("Value Error or Attribute Error")
         abort(403)
 
     #bad entry
     if not hmac.compare_digest(signature, expected_signature):
+        print("Signature Did Not Match")
         abort(403)
 
 
