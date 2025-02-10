@@ -85,7 +85,7 @@ while True and i<309:
 
     #apply model to image and get results
     #do any calculations required for model to get results
-    model_results = process_image(oldest_camera.temp_storage_path+'\\current.png', (os.getenv('MODEL_PATH_1')))
+    model_results = process_image(oldest_camera.temp_storage_path+'\\current.png', (os.getenv('MODEL_PATH_1')), 0.5, False)
     #get the last updated entry for camera from traffic_count table
 
     current_datetime = datetime.now()

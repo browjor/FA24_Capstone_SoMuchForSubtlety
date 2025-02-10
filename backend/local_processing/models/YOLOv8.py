@@ -1,6 +1,6 @@
 from ultralytics import YOLO
-from BoundingBoxes import save_detections_to_disk
-import cv2
+from backend.local_processing.models.BoundingBoxes import save_detections_to_disk
+import cv2, torch
 
 enable_grayscale = True
 
@@ -13,7 +13,8 @@ def preprocess_image(image):
     return preprocessed_image
 
 def infer(image, model_weights_path):
-    model = YOLO(model_weights_path)
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    model = YOLO(model_weights_path).to(device)
     results = model(image)
     return results[0].boxes.data
 
