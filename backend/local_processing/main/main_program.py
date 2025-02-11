@@ -129,6 +129,10 @@ def update_traffic_count(model_result, camera):
     except Exception as e:
         logging.info(f"General SQLAlchemy ORM error: {e}")
         return True, e
+
+
+timer = time.time()
+
 if __name__ == "__main__":
     while True:
         #start timer
@@ -160,7 +164,16 @@ if __name__ == "__main__":
         #getting name for when detections are saved
         image_name = f"{camera.camera_id}_{datetime.now().strftime('%d%m%y_%H%M%S')}"
         # apply model to image and get results
-        model_results = perform_model_evaluation(camera.temp_storage_path+'\\current.png', os.getenv('MODEL_PATH_1'), 0.5, True, camera.conditions, image_name)
+
+        #gathering a detection every 10 minutes
+        evaluation_time = time.time() - timer
+        if evaluation_time > 600:
+            evaluation_mode = True
+            timer = time.time()
+        else:
+            evaluation_mode = False
+
+        model_results = perform_model_evaluation(camera.temp_storage_path+'\\current.png', os.getenv('MODEL_PATH_1'), 0.5, evaluation_mode, camera.conditions, image_name)
 
         #handle errors for model processing
         if model_results[0]:
