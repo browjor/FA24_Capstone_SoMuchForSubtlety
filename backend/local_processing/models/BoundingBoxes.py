@@ -1,5 +1,5 @@
 import cv2
-import os
+import os, datetime
 # code ripped from https://inside-machinelearning.com/en/bounding-boxes-python-function/
 
 def box_label(image, box, label='', color=(128, 128, 128), txt_color=(255, 255, 255)):
@@ -49,9 +49,8 @@ def plot_bboxes(image, boxes, labels=[], colors=[], score=True, conf=None):
             box_label(image, box, label, color)
     return image
 
-def save_detections_to_disk(image, image_path, detection, conf):
+def save_detections_to_disk(image, image_name, detection, conf, model_name, conditions):
     detection_image = plot_bboxes(image, detection, conf=conf)
     if not os.path.exists("Detections\\"):
         os.mkdir("Detections\\")
-    file_name = os.path.basename(image_path)
-    cv2.imwrite("Detections\\" + file_name, detection_image)
+    cv2.imwrite(f"Detections\\{model_name}_{str(conditions)}_id{image_name}.png", detection_image)

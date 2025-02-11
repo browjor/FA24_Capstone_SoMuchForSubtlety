@@ -25,11 +25,12 @@ def extract_vehicle_count(results, confidence):
             vehicles += 1
     return vehicles
 
-def process_image(image_path, model_weights_path, confidence, save_to_disk):
+def process_image(image_path, model_weights_path, confidence, save_to_disk, model_name, conditions, image_name):
     image = preprocess_image(image_path)
     detections = infer(image, model_weights_path)
     if save_to_disk:
-        save_detections_to_disk(image, image_path, detections, conf=confidence)
+        #detections are saved as
+        save_detections_to_disk(image, image_name, detections, conf=confidence, model_name=model_name, conditions=conditions)
     data = extract_vehicle_count(detections, confidence)
     return data
 
