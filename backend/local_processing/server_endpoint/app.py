@@ -1,4 +1,5 @@
 from flask import Flask, request, abort
+from flask_cors import CORS
 from flask_restful import Resource, Api, marshal_with, fields
 from backend.database.create_db import TrafficCount, OfficialCameraList  # Import models only
 from sqlalchemy import create_engine, desc
@@ -6,12 +7,20 @@ from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 import os, json, time, hmac, hashlib
 
+
 load_dotenv()
 engine = create_engine(os.getenv('SQLite_DB_LOC'))
 SHARED_SECRET = os.getenv('SHARED_SECRET')
 server_ipv4 = os.getenv('SERVER_IPV4')
 server_port = int(os.getenv('SERVER_PORT'))
 app = Flask(__name__)
+#CORS(
+ #   app,
+  #  origins=["192.168.4.23"],
+   # methods=["GET"],  # Allow only necessary methods
+    #allow_headers=["X-Signature", "X-Message"],  # Allow necessary headers
+    #max_age=60  # Cache preflight responses for 10 minutes
+#)
 api = Api(app)
 
 dataFields = {
