@@ -32,14 +32,13 @@ def wait_until_time_is_up(start_time):
 def pass_to_next_loop(session, camera, wait_on_time, start_time, full_pass, error):
     if camera is not None:
         camera.last_update = datetime.now()
-        if not full_pass:
+        if not full_pass and error is None:
             camera.cam_status = "Offline"
+            logging.info(f"Main Loop skipping wait for Offline camera: {camera.camera_id}")
         if error is None and full_pass:
             logging.info(f"Main Loop entering wait for camera: {camera.camera_id}")
         elif error is not None:
             logging.info(f"Main Loop entering wait for camera: {camera.camera_id} with error: {error}")
-        else:
-            logging.info(f"Main Loop skipping wait for Offline camera: {camera.camera_id}")
     else:
         logging.info("Main Loop Error in Querying Database")
     session.commit()
@@ -72,9 +71,9 @@ def retrieve_image_from_url_into_storage(snapshot, storage_path):
         return bool_continue,e
     return bool_continue, None
 
-def perform_model_evaluation(camera_path, model_path, confidence, evaluation_mode, conditions, image_name):
+def perform_model_evaluation(retrieval_success, camera_path, model_path, confidence, evaluation_mode, conditions, image_name):
     bool_continue = False
-    if not retrieval_result[0] and os.path.exists(camera_path) and os.path.exists(model_path):
+    if (not retrieval_success) and os.path.exists(camera_path) and os.path.exists(model_path):
         try:
             model_path_name = os.path.basename(model_path).strip('.pt')
             count = process_image(camera_path, model_path, confidence, evaluation_mode, model_path_name, conditions, image_name)
@@ -82,6 +81,9 @@ def perform_model_evaluation(camera_path, model_path, confidence, evaluation_mod
         except Exception as e:
             bool_continue = True
             return bool_continue,e,None
+    else:
+        bool_continue = True
+        return bool_continue,Exception("Storage Path Issue Present During Model Evaluation"),None
 
 def update_traffic_count(model_result, camera):
     bool_continue = False
@@ -173,7 +175,8 @@ if __name__ == "__main__":
         else:
             evaluation_mode = False
 
-        model_results = perform_model_evaluation(camera.temp_storage_path+'\\current.png', os.getenv('MODEL_PATH_1'), 0.5, evaluation_mode, camera.conditions, image_name)
+        #passing FALSE for retrieval_result[0]
+        model_results = perform_model_evaluation(retrieval_result[0],camera.temp_storage_path+'\\current.png', os.getenv('MODEL_PATH_1'), 0.5, evaluation_mode, camera.conditions, image_name)
 
         #handle errors for model processing
         if model_results[0]:
