@@ -73,19 +73,23 @@ def retrieve_image_from_url_into_storage(snapshot, storage_path):
 
 def perform_model_evaluation(retrieval_success, camera_path, model_path, confidence, evaluation_mode, conditions, image_name):
     bool_continue = False
-    if (not retrieval_success) and os.path.exists(camera_path) and os.path.exists(model_path):
-        try:
-            model_path_name = os.path.basename(model_path).strip('.pt')
-            count = process_image(camera_path, model_path, confidence, evaluation_mode, model_path_name, conditions, image_name)
-            return bool_continue,None,count
-        except Exception as e:
+    try:
+        if (not retrieval_success) and os.path.exists(camera_path) and os.path.exists(model_path):
+            try:
+                model_path_name = os.path.basename(model_path).strip('.pt')
+                count = process_image(camera_path, model_path, confidence, evaluation_mode, model_path_name, conditions, image_name)
+                return bool_continue,None,count
+            except Exception as e:
+                bool_continue = True
+                return bool_continue,e,None
+        else:
             bool_continue = True
-            return bool_continue,e,None
-    else:
+            return bool_continue,Exception("Error in Process Image Parameters"),None
+    except OSError as e:
         bool_continue = True
-        return bool_continue,Exception("Storage Path Issue Present During Model Evaluation"),None
+        return bool_continue,e,None
 
-def update_traffic_count(model_result, camera):
+def update_traffic_count(model_result, camera, session):
     bool_continue = False
     current_datetime = datetime.now()
     try:
@@ -123,14 +127,14 @@ def update_traffic_count(model_result, camera):
             session.add(current_traffic_count)
             session.commit()
 
-        return bool_continue, None
+        return bool_continue, None, session
 
     except sqlalchemy.exc.SQLAlchemyError as e:
         logging.info(f"General SQLAlchemy error: {e}")
-        return True, e
+        return True, e, session
     except Exception as e:
         logging.info(f"General SQLAlchemy ORM error: {e}")
-        return True, e
+        return True, e, session
 
 
 timer = time.time()
@@ -183,7 +187,7 @@ if __name__ == "__main__":
             pass_to_next_loop(session, camera, True, start_time, False, model_results[1])
             continue
 
-        update_result = update_traffic_count(model_results[2], camera)
+        update_result = update_traffic_count(model_results[2], camera, session)
         pass_to_next_loop(session, camera, True, start_time, not update_result[0], update_result[1])
 
 

@@ -1,5 +1,8 @@
 import unittest
 from unittest.mock import MagicMock, patch
+
+from numpy.f2py.auxfuncs import throw_error
+
 from backend.local_processing.main.main_program import *
 
 
@@ -169,23 +172,23 @@ class TestMainLoop(unittest.TestCase):
 
     #(camera.snapshot,camera.temp_storage) passed always, returns False,None on success
     @patch("urllib.request.urlretrieve")
-    def test_retrieve_image_from_url_into_storage_success(self, mock_urlretrieve):
+    def test_retrieve_image_from_url_into_storage_SUCCESS(self, mock_urlretrieve):
         bool_continue, error = retrieve_image_from_url_into_storage("example", ".")
         self.assertFalse(bool_continue)
         self.assertIsNone(error)
         mock_urlretrieve.assert_called_once()
 
     @patch("urllib.request.urlretrieve", side_effect=Exception("Test - Error"))
-    def test_retrieve_image_from_url_into_storage_failure(self, mock_urlretrieve):
+    def test_retrieve_image_from_url_into_storage_FAILURE(self, mock_urlretrieve):
         bool_continue, error = retrieve_image_from_url_into_storage("example", ".")
         self.assertTrue(bool_continue)
         self.assertIsInstance(error, Exception)
         mock_urlretrieve.assert_called_once()
 
-    #pass redundant checks, should receive False, None, integer
+    #pass redundant checks, should receive False, None, integer on success
     @patch("backend.local_processing.main.main_program.process_image", return_value=5)
     @patch("os.path.exists", return_value=True)
-    def test_perform_model_evaluation(self, mock_exists, mock_process_image):
+    def test_perform_model_evaluation_SUCCESS(self, mock_exists, mock_process_image):
         bool_continue, error, count = perform_model_evaluation(
             False,'/fake/path.png', '/fake/path.pt', 0.5, False, 0, 'fake_image_name'
         )
@@ -195,28 +198,94 @@ class TestMainLoop(unittest.TestCase):
         self.assertIsNone(error)
         self.assertEqual(count, 5)
 
-    #pass redundant checks, should receive True, Error, None
-    @patch("backend.local_processing.models.YOLOv8.process_image", side_effect=Exception("Model error"))
-    def test_perform_model_evaluation_failure(self, mock_process_image):
+    #pass redundant checks, should return True, Error, None on error during model evaluation
+    @patch("backend.local_processing.main.main_program.process_image", side_effect=Exception("Test - Error"))
+    @patch("os.path.exists", return_value=True)
+    def test_perform_model_evaluation_FAILURE(self, mock_exists, mock_process_image):
         bool_continue, error, count = perform_model_evaluation(
-            True, "cam_path", "model_path", 0.5, False, 0, 'img_name'
+            False, '/fake/path.png', '/fake/path.pt', 0.5, False, 0, 'fake_image_name'
         )
+        mock_exists.assert_called()
+        mock_process_image.assert_called_once()
         self.assertTrue(bool_continue)
-        self.assertIsInstance(error, Exception)
-        self.assertIsNone(count)
+        self.assertRaises(Exception, mock_process_image)
+        self.assertEqual(count, None)
 
-    def test_update_traffic_count(self):
+    #want to ensure that when model_result and camera are passed and no historical value is present
+    #that add and commit are still called
+    def test_update_traffic_count_HISTORICAL_NONE(self):
         self.mock_session.query().filter().order_by().first.return_value = None
-        bool_continue, error = update_traffic_count(10, self.mock_camera_full)
+        bool_continue, error, db_session = update_traffic_count(10, self.mock_camera_full, self.mock_session)
         self.assertFalse(bool_continue)
         self.assertIsNone(error)
+        self.assertIs(db_session, self.mock_session)
+        self.mock_session.add.assert_called_once()
         self.mock_session.commit.assert_called()
 
-    @patch("backend.database.create_db.session.query", side_effect=Exception("SQL error"))
-    def test_update_traffic_count_sqlalchemy_error(self, mock_query):
-        bool_continue, error = update_traffic_count(10, self.mock_camera_full)
+    #pass camera and count greater than historical maximum,
+    #causing historical and specific count and time to be replaced by passed in camera values
+    def test_update_traffic_count_HISTORICAL_LESS(self):
+        new_time = datetime.now()
+        mock_historical = TrafficCount(
+            cam_id=1,
+            traffic_count=5,
+            traffic_time=new_time,
+            max_traffic_count=8,
+            max_traffic_time=new_time
+        )
+        #the query REALLY doesn't like mock
+        self.mock_session.query().filter().order_by().first.return_value = mock_historical
+        model_result = 10
+        time.sleep(2)
+        bool_continue, error, db_session = update_traffic_count(model_result, self.mock_camera_full, self.mock_session)
+        self.assertFalse(bool_continue)
+        self.assertIsNone(error)
+        self.assertIs(db_session, self.mock_session)
+        self.mock_session.add.assert_called_once()
+        self.mock_session.commit.assert_called()
+        #checking the actual TrafficCount object created in update_traffic_count
+        added_object = self.mock_session.add.call_args[0][0]
+        self.assertEqual(added_object.cam_id, self.mock_camera_full.camera_id)
+        self.assertEqual(added_object.traffic_count, model_result)
+        self.assertEqual(added_object.max_traffic_count, model_result)
+        self.assertNotEqual(added_object.traffic_time, new_time)
+        self.assertNotEqual(added_object.max_traffic_time, new_time)
+
+
+    def test_update_traffic_count_HISTORICAL_MORE(self):
+        new_time = datetime.now()
+        mock_historical = TrafficCount(
+            cam_id=1,
+            traffic_count=5,
+            traffic_time=new_time,
+            max_traffic_count=12,
+            max_traffic_time=new_time
+        )
+        #the query REALLY doesn't like mock
+        self.mock_session.query().filter().order_by().first.return_value = mock_historical
+        model_result = 8
+        time.sleep(2)
+        bool_continue, error, db_session = update_traffic_count(model_result, self.mock_camera_full, self.mock_session)
+        self.assertFalse(bool_continue)
+        self.assertIsNone(error)
+        self.assertIs(db_session, self.mock_session)
+        self.mock_session.add.assert_called_once()
+        self.mock_session.commit.assert_called()
+        #checking the actual TrafficCount object created in update_traffic_count
+        added_object = self.mock_session.add.call_args[0][0]
+        self.assertEqual(added_object.cam_id, self.mock_camera_full.camera_id)
+        self.assertEqual(added_object.traffic_count, model_result)
+        self.assertEqual(added_object.max_traffic_count, mock_historical.max_traffic_count)
+        self.assertNotEqual(added_object.traffic_time, new_time)
+        self.assertEqual(added_object.max_traffic_time, mock_historical.max_traffic_time)
+
+
+    def test_update_traffic_count_sqlalchemy_error(self):
+        self.mock_session.query().filter().order_by().first.return_value = throw_error
+        bool_continue, error, db_session = update_traffic_count(10, self.mock_camera_full, self.mock_session)
         self.assertTrue(bool_continue)
         self.assertIsInstance(error, Exception)
+        self.assertEqual(self.mock_session, db_session)
 
 
 if __name__ == "__main__":
