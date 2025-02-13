@@ -1,111 +1,122 @@
-from flask import Flask, request, abort
-from flask_cors import CORS
-from flask_restful import Resource, Api, marshal_with, fields
-from backend.database.create_db import TrafficCount, OfficialCameraList  # Import models only
-from sqlalchemy import create_engine, desc
-from sqlalchemy.orm import sessionmaker
+from flask import Flask, jsonify, request
+import hmac, hashlib, time, os, threading, json
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
-import os, json, time, hmac, hashlib
-
+from sqlalchemy import create_engine, func
+from sqlalchemy.orm import sessionmaker
+from backend.database.create_db import CurrentCamera, TrafficCount
 
 load_dotenv()
-engine = create_engine(os.getenv('SQLite_DB_LOC'))
 SHARED_SECRET = os.getenv('SHARED_SECRET')
 server_ipv4 = os.getenv('SERVER_IPV4')
 server_port = int(os.getenv('SERVER_PORT'))
+engine = create_engine(os.getenv('SQLite_DB_LOC'))
+data_condition = threading.Condition()
+traffic_data = []
 app = Flask(__name__)
-#CORS(
- #   app,
-  #  origins=["192.168.4.23"],
-   # methods=["GET"],  # Allow only necessary methods
-    #allow_headers=["X-Signature", "X-Message"],  # Allow necessary headers
-    #max_age=60  # Cache preflight responses for 10 minutes
-#)
-api = Api(app)
 
-dataFields = {
-    'id': fields.Integer,
-    'density': fields.Float,
-    'latitude': fields.Float,
-    'longitude': fields.Float
-}
 
-def verify_request_signature(headers):
-    signature = headers.get("X-Signature")
-    message = headers.get("X-Message")
+def fetch_traffic_data_from_db():
+    traffic_data = []
+    Session = sessionmaker(bind=engine)
+    session = Session()
 
-    #if malformed
-    if not signature or not message:
-        print("No sig or message")
-        abort(403)
+    latest_cameras = (
+        session.query(
+            CurrentCamera.camera_id,
+            CurrentCamera.latitude,
+            CurrentCamera.longitude
+        )
+        .filter(CurrentCamera.cam_status == "Online")
+        .order_by(CurrentCamera.last_update.desc())  # Ensures the most recent cameras are selected
+        .distinct(CurrentCamera.camera_id)  # Ensures distinct camera entries
+        .all()
+    )
 
-    #create server version
-    expected_signature = hmac.new(
-        SHARED_SECRET.encode(),
-        message.encode(),
-        hashlib.sha256
-    ).hexdigest()
+    # Step 2: For each camera, find the most recent traffic_count and max_traffic_count
+    for cam in latest_cameras:
+        latest_traffic = (
+            session.query(
+                TrafficCount.traffic_count,
+                TrafficCount.max_traffic_count
+            )
+            .filter(TrafficCount.cam_id == cam.camera_id)
+            .order_by(TrafficCount.traffic_time.desc())  # Get the latest traffic data
+            .first()
+        )
 
-    # get time value, see if it matches, prevent replay attacks
+        if latest_traffic:  # Ensure there's a valid traffic count entry
+            density = latest_traffic.traffic_count / latest_traffic.max_traffic_count if latest_traffic.max_traffic_count else 0
+            traffic_data.append({'density': density, 'lat': cam.latitude, 'lon': cam.longitude})
+            print(f"Cam ID: {cam.camera_id}, Density: {density}, Latitude: {cam.latitude}, Longitude: {cam.longitude}")
+
+
+    session.commit()
+    session.close()
+    return traffic_data
+
+
+
+def update_traffic_data():
+    global traffic_data
+    while True:
+        new_data = fetch_traffic_data_from_db()
+
+        with data_condition:
+            print("[INFO] Updating traffic data...")
+            traffic_data.clear()  # Clear old data
+            traffic_data.extend(new_data)  # Update with new data
+            data_condition.notify_all()  # Notify readers that data is updated
+
+        time.sleep(9)  # Refresh every 9 seconds
+
+
+def verify_hmac(request):
+    """Verify HMAC-SHA256 authentication."""
+    received_hmac = request.headers.get("X-HMAC-Signature")
+    timestamp = request.headers.get("X-Timestamp")
+
+    if not received_hmac or not timestamp:
+        return False
+
     try:
-        method, timestamp = message.split(" ")
-        timestamp = int(timestamp)  # Convert timestamp to integer
-        current_time = int(time.time())
-        if 15 < abs(current_time - timestamp) < -15 :
-            print("Bad timestamp")
-            abort(403)
-    except (ValueError, AttributeError):
-        print("Attribute/Value Error")
-        abort(403)
+        timestamp = int(timestamp)
+    except ValueError:
+        return False
 
-    #bad entry
-    if not hmac.compare_digest(signature, expected_signature):
-        print("Bad HMAC")
-        abort(403)
+    # Prevent replay attacks (accept timestamps within a 5-minute window)
+    if abs(time.time() - timestamp) > 300:
+        return False
 
+    # Compute the expected HMAC
+    message = f"{timestamp}".encode()
+    expected_hmac = hmac.new(SHARED_SECRET.encode(), message, hashlib.sha256).hexdigest()
 
+    return hmac.compare_digest(received_hmac, expected_hmac)
 
-class LatestTrafficData(Resource):
-    @marshal_with(dataFields)
-    def get(self):
-        with app.app_context():
+def generate_response_hmac(response_json, response_timestamp):
+    """Generate HMAC signature for the response data and timestamp."""
+    message = json.dumps(response_json, separators=(',', ':')).encode() + str(response_timestamp).encode()
+    response_hmac = hmac.new(SHARED_SECRET.encode(), message, hashlib.sha256).hexdigest()
+    return response_hmac
 
-            verify_request_signature(request.headers)
+@app.route("/traffic-data", methods=["GET"])
+def get_traffic_data():
+    if not verify_hmac(request):
+        return jsonify({"error": "Unauthorized"}), 403
 
-            Session = sessionmaker(bind=engine)
-            session = Session()
+    response_timestamp = int(time.time())  # Include timestamp in response
+    with data_condition:
+        data_condition.wait()  # Wait until traffic_data is fully updated
+        response_json = {"data": traffic_data, "timestamp": response_timestamp}
+        response_hmac = generate_response_hmac(response_json, response_timestamp)
 
-            # getting the last updated camera
-            recent_traffic = session.query(TrafficCount).order_by(desc(TrafficCount.traffic_time)).first()
+    return jsonify({
+        "data": traffic_data,
+        "hmac": response_hmac  # Send signed HMAC to frontend
+    })
 
-            if not recent_traffic:
-                abort(404, message="No traffic data found.")
+if __name__ == "__main__":
+    threading.Thread(target=update_traffic_data, daemon=True).start()
+    app.run(host=server_ipv4, port=server_port, debug=False)
 
-            camera_info = session.query(OfficialCameraList).filter_by(id=recent_traffic.cam_id).first()
-
-            if not camera_info:
-                abort(404, message="Camera information not found for the given cam_id.")
-
-            density = recent_traffic.traffic_count / recent_traffic.max_traffic_count if recent_traffic.max_traffic_count else 0
-
-            result = {
-                'id': recent_traffic.cam_id,
-                'density': density,
-                'latitude': camera_info.latitude,
-                'longitude': camera_info.longitude
-            }
-            session.commit()
-            session.close()
-            return result
-
-
-api.add_resource(LatestTrafficData, '/latest-traffic')
-
-
-@app.route('/')
-def home():
-    return 'Hello, Flask!'
-
-
-if __name__ == '__main__':
-    app.run(debug=True, host= server_ipv4, port=server_port)
