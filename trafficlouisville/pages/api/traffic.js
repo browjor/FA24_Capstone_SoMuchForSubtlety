@@ -20,26 +20,27 @@ export default async function handler(req, res) {
     }
 
     try {
-        let timeStamp = Math.floor(Date.now() / 1000);
-        const message = timeStamp.toString();
-        const hmac = crypto.createHmac("sha256", SECRET_KEY).update(message).digest("hex");
+        let timeStamp = Math.floor(Date.now() / 1000);  // Ensure a fresh timestamp
+        timeStamp = timeStamp.toString();  // Convert to string immediately
+
+        const hmac = crypto.createHmac("sha256", SECRET_KEY)
+            .update(Buffer.from(timeStamp, "utf-8"))  // Ensure it is a Buffer
+            .digest("hex");
 
         const response = await axios.get(BACKEND_URL, {
             headers: {
-                "X-Timestamp": timeStamp,
+                "X-Timestamp": timeStamp,  // Send timestamp as a string
                 "X-HMAC-Signature": hmac,
             },
         });
 
-        console.log("[DEBUG] Response from Flask: ", response.data);
+        const { data, timestamp: responseTimestamp, hmac: receivedHMAC } = response.data;
 
-        const { data, timeStamp: responseTimestamp, hmac: receivedHMAC } = response.data;
-
-        if (!verifyResponseHMAC(data, responseTimestamp, receivedHMAC)) {
+        if (!verifyResponseHMAC(data, responseTimestamp.toString(), receivedHMAC)) {
             return res.status(403).json({ error: "Invalid HMAC signature" });
         }
 
-        res.status(200).json({ data, timeStamp: responseTimestamp });
+        res.status(200).json({ data, timestamp: responseTimestamp });
     } catch (error) {
         console.error("Error fetching traffic data:", error.message);
         res.status(500).json({ error: "Failed to fetch traffic data" });
