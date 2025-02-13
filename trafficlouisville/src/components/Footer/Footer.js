@@ -1,4 +1,5 @@
 import Container from 'src/components/Container';
+import React from 'react';
 
 import styles from './Footer.module.scss';
 

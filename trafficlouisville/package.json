@@ -5,7 +5,7 @@
   "license": "",
   "author": "Mason Napper",
   "scripts": {
-    "dev": "set NODE_EXTRA_CA_CERTS=C:\\Users\\johnb\\AppData\\Roaming\\Caddy\\pki\\authorities\\local\\root.crt && next dev",
+    "dev": "next dev",
     "build": "next build",
     "export": "next export",
     "start": "next start",
@@ -16,8 +16,10 @@
     "url": "https://github.com/browjor/FA24_Capstone_SoMuchForSubtlety"
   },
   "dependencies": {
+    "axios": "^1.7.9",
     "copy-webpack-plugin": "^11.0.0",
     "leaflet": "^1.9.4",
+    "leaflet.heat": "^0.2.0",
     "next": "^14.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -28,11 +30,18 @@
   "devDependencies": {
     "@babel/preset-env": "^7.26.7",
     "@babel/preset-react": "^7.26.3",
-    "@testing-library/jest-dom": "^5.0.0",
-    "@testing-library/react": "^13.0.0",
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^14.6.1",
     "babel-jest": "^29.7.0",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "msw": "^2.7.0"
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.(js|jsx|ts|tsx)$": "babel-jest"
+    },
+    "testEnvironment": "jsdom"
   }
 }
