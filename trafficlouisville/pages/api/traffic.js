@@ -6,7 +6,7 @@ const apiPath = "/latest-traffic";
 const BACKEND_URL = `http://${process.env.BACKEND_SERVER_IPV4}:${process.env.BACKEND_SERVER_PORT}${apiPath}`;
 
 function verifyResponseHMAC(data, timestamp, receivedHMAC) {
-    const message = JSON.stringify({ data, timestamp });  // Ensure timestamp is inside JSON
+    const message = JSON.stringify({ data, timestamp: timestamp.toString() });  // Ensure timestamp is inside JSON
     const expectedHMAC = crypto.createHmac("sha256", SECRET_KEY)
         .update(Buffer.from(message, "utf-8"))  // Ensure proper encoding
         .digest("hex");
