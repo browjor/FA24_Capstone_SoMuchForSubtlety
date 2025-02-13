@@ -22,7 +22,7 @@ export default async function handler(req, res) {
 
     try {
         let timeStamp = Math.floor(Date.now() / 1000);
-        const message = timeStamp
+        const message = timeStamp.toString();
         const hmac = crypto.createHmac("sha256", SECRET_KEY).update(message).digest("hex");
 
         const response = await axios.get(BACKEND_URL, {
