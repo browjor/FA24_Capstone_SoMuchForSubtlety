@@ -3,7 +3,8 @@ import axios from "axios";
 
 const SECRET_KEY = process.env.SHARED_SECRET;
 const apiPath = "/latest-traffic";
-const BACKEND_URL = `http://${process.env.BACKEND_SERVER_IPV4}:${process.env.BACKEND_SERVER_PORT}${apiPath}`;
+//const BACKEND_URL = `http://${process.env.BACKEND_SERVER_IPV4}:${process.env.BACKEND_SERVER_PORT}${apiPath}`;
+const BACKEND_URL = 'http://192.168.5.25:12357/latest-traffic';
 
 function verifyResponseHMAC(data, timestamp, receivedHMAC) {
     const message = JSON.stringify({ data, timestamp });  // Ensure timestamp is inside JSON
@@ -30,6 +31,8 @@ export default async function handler(req, res) {
                 "X-HMAC-Signature": hmac,
             },
         });
+
+        console.log("[DEBUG] Response from Flask: ", response.data);
 
         const { data, timeStamp: responseTimestamp, hmac: receivedHMAC } = response.data;
 
