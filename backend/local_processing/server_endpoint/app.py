@@ -22,57 +22,59 @@ def fetch_traffic_data_from_db():
     session = Session()
 
     latest_cameras = (
+        #get distinct current cam_id, lat, and long where online
         session.query(
             CurrentCamera.camera_id,
             CurrentCamera.latitude,
             CurrentCamera.longitude
         )
         .filter(CurrentCamera.cam_status == "Online")
-        .order_by(CurrentCamera.last_update.desc())  # Ensures the most recent cameras are selected
-        .distinct(CurrentCamera.camera_id)  # Ensures distinct camera entries
+        .order_by(CurrentCamera.last_update.desc())
+        .distinct(CurrentCamera.camera_id)
         .all()
     )
 
-    # Step 2: For each camera, find the most recent traffic_count and max_traffic_count
+    #may need to be changed, it's pretty intensive to do a hundred queries but if it works it works
     for cam in latest_cameras:
+        #by cam get single traffic count, max_traffic_count where cam_id and latest time
         latest_traffic = (
             session.query(
                 TrafficCount.traffic_count,
                 TrafficCount.max_traffic_count
             )
             .filter(TrafficCount.cam_id == cam.camera_id)
-            .order_by(TrafficCount.traffic_time.desc())  # Get the latest traffic data
+            .order_by(TrafficCount.traffic_time.desc())
             .first()
         )
 
-        if latest_traffic:  # Ensure there's a valid traffic count entry
+        #may have an issue with float formatting
+        if latest_traffic:
             density = latest_traffic.traffic_count / latest_traffic.max_traffic_count if latest_traffic.max_traffic_count else 0
             traffic_data.append({'density': density, 'lat': cam.latitude, 'lon': cam.longitude})
             print(f"Cam ID: {cam.camera_id}, Density: {density}, Latitude: {cam.latitude}, Longitude: {cam.longitude}")
 
 
-    session.commit()
     session.close()
     return traffic_data
 
 
 
+#thread to update the list
 def update_traffic_data():
     global traffic_data
     while True:
         new_data = fetch_traffic_data_from_db()
 
         with data_condition:
-            print("[INFO] Updating traffic data...")
-            traffic_data.clear()  # Clear old data
-            traffic_data.extend(new_data)  # Update with new data
-            data_condition.notify_all()  # Notify readers that data is updated
+            traffic_data.clear()
+            traffic_data.extend(new_data)
+            print("Traffic Data Updated")
+            data_condition.notify_all()
 
         time.sleep(9)  # Refresh every 9 seconds
 
 
 def verify_hmac(request):
-    """Verify HMAC-SHA256 authentication."""
     received_hmac = request.headers.get("X-HMAC-Signature")
     timestamp = request.headers.get("X-Timestamp")
 
@@ -84,30 +86,36 @@ def verify_hmac(request):
     except ValueError:
         return False
 
-    # Prevent replay attacks (accept timestamps within a 5-minute window)
     if abs(time.time() - timestamp) > 300:
         return False
 
-    # Compute the expected HMAC
     message = f"{timestamp}".encode()
     expected_hmac = hmac.new(SHARED_SECRET.encode(), message, hashlib.sha256).hexdigest()
 
     return hmac.compare_digest(received_hmac, expected_hmac)
 
+#matching json with , and : so it'll be received right on the frontend
 def generate_response_hmac(response_json, response_timestamp):
-    """Generate HMAC signature for the response data and timestamp."""
     message = json.dumps(response_json, separators=(',', ':')).encode() + str(response_timestamp).encode()
     response_hmac = hmac.new(SHARED_SECRET.encode(), message, hashlib.sha256).hexdigest()
     return response_hmac
 
-@app.route("/traffic-data", methods=["GET"])
+
+
+@app.route("/latest-traffic", methods=["GET"])
 def get_traffic_data():
     if not verify_hmac(request):
         return jsonify({"error": "Unauthorized"}), 403
 
-    response_timestamp = int(time.time())  # Include timestamp in response
+    response_timestamp = int(time.time())
+    #telling main thread to not use traffic_data list while being updated
     with data_condition:
-        data_condition.wait()  # Wait until traffic_data is fully updated
+        #timeout after 5 seconds of list being updated
+        notified = data_condition.wait(timeout=5)
+        if not notified:
+            print("Timeout waiting for traffic data update.")
+            return jsonify({"error": "Traffic data update timeout"}), 500
+
         response_json = {"data": traffic_data, "timestamp": response_timestamp}
         response_hmac = generate_response_hmac(response_json, response_timestamp)
 
