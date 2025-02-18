@@ -12,7 +12,7 @@ function verifyResponseHMAC(unformatted, timestamp, receivedHMAC) {
         lon: entry.lon
     }));
     const message = JSON.stringify({ data, timestamp: timestamp.toString() });
-    console.log(message)// Ensure timestamp is inside JSON
+    //console.log(message)// Ensure timestamp is inside JSON
     const expectedHMAC = crypto.createHmac("sha256", SECRET_KEY)
         .update(Buffer.from(message, "utf-8"))  // Ensure proper encoding
         .digest("hex");
