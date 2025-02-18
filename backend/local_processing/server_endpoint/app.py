@@ -100,7 +100,7 @@ def verify_hmac(request):
 def generate_response_hmac(response_json):
     # Ensure key ordering and compact JSON format
     message = json.dumps(response_json, separators=(',', ':'), sort_keys=True, ensure_ascii=False).encode('utf-8')
-    print(message)
+    #print(message)
     response_hmac = hmac.new(SHARED_SECRET.encode(), message, hashlib.sha256).hexdigest()
     return response_hmac
 
