@@ -18,7 +18,7 @@ export default function Map({ center, zoom, trafficData = [] }) {
     }
 
     return (
-        <div style={{ height: "50vh", width: "50vw" }}>
+        <div style={{display: flex, height: "75vh", width: "75vw" }}>
             <MapContainer center={center} zoom={zoom} style={{ height: "100%", width: "100%" }}>
                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
