@@ -5,8 +5,14 @@ const SECRET_KEY = process.env.SHARED_SECRET;
 const apiPath = "/latest-traffic";
 const BACKEND_URL = `http://${process.env.BACKEND_SERVER_IPV4}:${process.env.BACKEND_SERVER_PORT}${apiPath}`;
 
-function verifyResponseHMAC(data, timestamp, receivedHMAC) {
-    const message = JSON.stringify({ data, timestamp: timestamp.toString() });  // Ensure timestamp is inside JSON
+function verifyResponseHMAC(unformatted, timestamp, receivedHMAC) {
+    const data = unformatted.map(entry => ({
+        density: parseFloat(entry.density),  // Ensures density is always a float
+        lat: entry.lat,
+        lon: entry.lon
+    }));
+    const message = JSON.stringify({ data, timestamp: timestamp.toString() });
+    console.log(message)// Ensure timestamp is inside JSON
     const expectedHMAC = crypto.createHmac("sha256", SECRET_KEY)
         .update(Buffer.from(message, "utf-8"))  // Ensure proper encoding
         .digest("hex");
@@ -34,10 +40,15 @@ export default async function handler(req, res) {
             },
         });
 
-        const { data, timestamp: responseTimestamp, hmac: receivedHMAC } = response.data;
+        let { data, timestamp: responseTimestamp, hmac: receivedHMAC } = response.data;
 
         if (!verifyResponseHMAC(data, responseTimestamp.toString(), receivedHMAC)) {
             return res.status(403).json({ error: "Invalid HMAC signature" });
+        }
+
+        if (!Array.isArray(data)) {
+            console.warn("Received non-array traffic data, converting:", data);
+            data = data ? [data] : [];  // Convert non-array to array
         }
 
         res.status(200).json({ data, timestamp: responseTimestamp });

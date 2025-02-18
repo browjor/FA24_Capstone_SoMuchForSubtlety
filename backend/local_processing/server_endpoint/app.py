@@ -17,7 +17,6 @@ traffic_data = []
 app = Flask(__name__)
 
 def fetch_traffic_data_from_db():
-    global traffic_data
     traffic_data = []
     Session = sessionmaker(bind=engine)
     session = Session()
@@ -51,6 +50,8 @@ def fetch_traffic_data_from_db():
         #may have an issue with float formatting
         if latest_traffic:
             density = latest_traffic.traffic_count / latest_traffic.max_traffic_count if latest_traffic.max_traffic_count else 0
+            if density == 1.0:
+                density = int(density)
             traffic_data.append({'density': density, 'lat': cam.latitude, 'lon': cam.longitude})
             #print(f"Cam ID: {cam.camera_id}, Density: {density}, Latitude: {cam.latitude}, Longitude: {cam.longitude}")
 
@@ -96,11 +97,12 @@ def verify_hmac(request):
     return hmac.compare_digest(received_hmac, expected_hmac)
 
 #matching json with , and : so it'll be received right on the frontend
-def generate_response_hmac(response_json, response_timestamp):
-    message = json.dumps(response_json, separators=(',', ':')).encode() + str(response_timestamp).encode()
+def generate_response_hmac(response_json):
+    # Ensure key ordering and compact JSON format
+    message = json.dumps(response_json, separators=(',', ':'), sort_keys=True, ensure_ascii=False).encode('utf-8')
+    print(message)
     response_hmac = hmac.new(SHARED_SECRET.encode(), message, hashlib.sha256).hexdigest()
     return response_hmac
-
 
 
 @app.route("/latest-traffic", methods=["GET"])
@@ -108,7 +110,7 @@ def get_traffic_data():
     if not verify_hmac(request):
         return jsonify({"error": "Unauthorized"}), 403
 
-    response_timestamp = int(time.time())
+    response_timestamp = str(int(time.time()))
     #telling main thread to not use traffic_data list while being updated
     with data_condition:
         #timeout after 5 seconds of list being updated
@@ -118,8 +120,8 @@ def get_traffic_data():
             return jsonify({"error": "Traffic data update timeout"}), 500
 
         response_json = {"data": traffic_data, "timestamp": response_timestamp}
-        response_hmac = generate_response_hmac(response_json, response_timestamp)
-
+        response_hmac = generate_response_hmac(response_json)
+        print(response_hmac)
     return jsonify({
         "data": traffic_data,
         "timestamp": response_timestamp,
