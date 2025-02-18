@@ -2,8 +2,9 @@
   "compilerOptions": {
     "baseUrl": "./",
     "paths": {
-      "@components/*": [ "src/app/components/*" ],
-      "@styles/*": [ "src/app/styles/*" ]
-    }
+      "@components/*": ["src/app/components/*"],
+      "@styles/*": ["src/app/styles/*"]
+    },
+    "jsx": "react-jsx"  // Enable JSX support for React 17+ (new JSX transform)
   }
 }

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { FaGithub } from 'react-icons/fa';
 import Image from 'next/image'; // Import Image component
+import React from 'react';
 
 import Container from 'src/components/Container';
 

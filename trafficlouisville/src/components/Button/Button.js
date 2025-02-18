@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import styles from './Button.module.scss';
+import React from 'react';
 
 const Button = ({children, href, className, ...rest}) => {
   let buttonClassName = styles.button;

@@ -1,62 +1,63 @@
 import React, { useEffect, useState } from "react";
-import fetchTrafficData from "@/lib/fetchTrafficData"; // Import API function
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet.heat";
+import "leaflet/dist/leaflet.css"; // Import Leaflet CSS
 
 const HeatmapLayer = ({ trafficData }) => {
-  const map = useMap(); // Get reference to the Leaflet map
+  const map = useMap();
+  const [heatLayer, setHeatLayer] = useState(null);
 
   useEffect(() => {
-    if (trafficData.length > 0) {
-      // Convert traffic data to heatmap format
-      const formattedData = trafficData.map(({ latitude, longitude, density }) => [
-        latitude,
-        longitude,
-        density
-      ]);
+    console.log("Traffic data for heatmap:", trafficData);  // Log traffic data when it changes
 
-      // Create or update heatmap layer
-      const heatLayer = L.heatLayer(formattedData, {
-        radius: 25,
-        blur: 15,
-        maxZoom: 17
-      }).addTo(map);
+    if (!map || !Array.isArray(trafficData) || trafficData.length === 0) return;  // Safeguard against empty data
 
-      return () => {
-        map.removeLayer(heatLayer); // Cleanup old heatmap layer when data updates
-      };
+    // Remove old heatmap layer if it exists
+    if (heatLayer) {
+      map.removeLayer(heatLayer);
     }
+
+    // Convert traffic data to heatmap points
+    const heatData = trafficData.map(({ latitude, longitude, density }) => [
+      latitude,
+      longitude,
+      density,
+    ]);
+
+    // Create new heatmap layer with custom settings
+    const newHeatLayer = L.heatLayer(heatData, {
+      radius: 30, // Increase radius for larger heat spots
+      blur: 20, // Increase blur for smoother transitions
+      maxZoom: 15, // Set how zoomed in the heatmap remains visible
+      max: 50, // Scale the maximum density for better visibility
+      gradient: {
+        0.2: "blue",
+        0.4: "lime",
+        0.6: "yellow",
+        0.8: "orange",
+        1.0: "red",
+      },
+    }).addTo(map);
+
+    setHeatLayer(newHeatLayer);
+
+    return () => {
+      map.removeLayer(newHeatLayer); // Cleanup old heatmap
+    };
   }, [trafficData, map]);
 
-  return null; // This component doesn't render anything itself
+  return null;
 };
 
-const TrafficMap = () => {
-  const [trafficData, setTrafficData] = useState([]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const data = await fetchTrafficData();
-        if (data) {
-          setTrafficData(data);
-        }
-      } catch (error) {
-        console.error("Error fetching traffic data:", error);
-      }
-    };
-
-    fetchData(); // Fetch immediately on mount
-
-    const interval = setInterval(fetchData, 4800); // Fetch every 4.8 seconds
-
-    return () => clearInterval(interval); // Cleanup interval on unmount
-  }, []);
-
+const TrafficMap = ({ trafficData }) => {
   return (
-    <div style={{ width: "100%", height: "500px" }}>
-      <MapContainer center={[37.7749, -122.4194]} zoom={12} style={{ width: "100%", height: "100%" }}>
+    <div style={{ width: "100%", height: "500px", position: "relative" }}>
+      <MapContainer
+        center={[38.2527, -85.7585]}
+        zoom={12}
+        style={{ width: "100%", height: "100%", position: "relative" }}
+      >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution="&copy; OpenStreetMap contributors"

@@ -10,11 +10,11 @@ load_dotenv()
 SHARED_SECRET = os.getenv('SHARED_SECRET')
 server_ipv4 = os.getenv('SERVER_IPV4')
 server_port = int(os.getenv('SERVER_PORT'))
+
 engine = create_engine(os.getenv('SQLite_DB_LOC'))
 data_condition = threading.Condition()
 traffic_data = []
 app = Flask(__name__)
-
 
 def fetch_traffic_data_from_db():
     global traffic_data

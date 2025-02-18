@@ -1,4 +1,5 @@
 import styles from './Container.module.scss';
+import React from 'react';
 
 const Container = ({ children, className, ...rest }) => {
   let containerClassName = styles.container;
