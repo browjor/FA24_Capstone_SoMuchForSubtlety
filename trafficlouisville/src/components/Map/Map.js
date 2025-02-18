@@ -8,10 +8,10 @@ const CircleMarker = dynamic(() => import("react-leaflet").then(mod => mod.Circl
 
 export default function Map({ center, zoom, trafficData = [] }) {
     // Log trafficData to ensure it's coming through correctly
-    console.log("trafficData:", trafficData);
+    //console.log("trafficData:", trafficData.data);
 
     // Handle the case where trafficData might not be in the correct format
-    if (!Array.isArray(trafficData)) {
+    if (!Array.isArray(trafficData.data)) {
         console.error("Invalid traffic data format:", trafficData);
         return <div>Error: Invalid traffic data</div>;
     }
@@ -22,7 +22,7 @@ export default function Map({ center, zoom, trafficData = [] }) {
                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
                 {/* Render markers if trafficData is valid */}
-                {trafficData.map(({density, lat, lon}, index) => (
+                {trafficData.data.map(({density, lat, lon}, index) => (
                     <CircleMarker
                         key={index}
                         center={[lat, lon]}
