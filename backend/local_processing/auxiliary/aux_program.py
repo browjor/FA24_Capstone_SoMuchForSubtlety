@@ -164,6 +164,9 @@ imminent_weather_change = False
 
 logging.info("Starting the main auxiliary loop.")#main auxiliary loop
 
+###ADD IN HOURLY CHECK OF API FOR CAM STATUS
+###NEEDED FOR PASS_TO_NEXT_LOOP in MAIN PROGRAM
+
 while True:
     try:
         logging.info("Starting a new loop iteration.")

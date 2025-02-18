@@ -3,7 +3,7 @@ from backend.database.create_db import CurrentCamera, TrafficCount
 from sqlalchemy import create_engine, asc
 from sqlalchemy.orm import sessionmaker, exc
 import sqlalchemy.exc
-from urllib.error import ContentTooShortError, HTTPError
+from urllib.error import ContentTooShortError, HTTPError, URLError
 from datetime import datetime
 from backend.local_processing.models.YOLOv8 import process_image
 from dotenv import load_dotenv
@@ -30,93 +30,96 @@ def wait_until_time_is_up(start_time):
 
 
 def pass_to_next_loop(session, camera, wait_on_time, start_time, full_pass, error):
-    camera.last_update = datetime.now()
-    if not full_pass:
-        camera.cam_status = "Offline"
-    if error is None and full_pass:
-        logging.info(f"Main Loop entering wait for camera: {camera.camera_id}")
-    elif error is not None:
-        logging.info(f"Main Loop entering wait for camera: {camera.camera_id} with error: {error}")
+    if camera is not None:
+        camera.last_update = datetime.now()
+        if not full_pass and error is None:
+            camera.cam_status = "Offline"
+            logging.info(f"Main Loop skipping wait for Offline camera: {camera.camera_id}")
+        if error is None and full_pass:
+            logging.info(f"Main Loop entering wait for camera: {camera.camera_id}")
+        elif error is not None:
+            logging.info(f"Main Loop entering wait for camera: {camera.camera_id} with error: {error}")
     else:
-        logging.info(f"Main Loop skipping wait for Offline camera: {camera.camera_id}")
+        logging.info("Main Loop Error in Querying Database")
     session.commit()
     session.close()
     if wait_on_time:
         wait_until_time_is_up(start_time)
 
-#for demo purposes
-i = 0
-
-while True and i<309:
-    #start timer
-    start_time = time.time()
-
-    #starting and closing session each loop to ensure SQL writes are finished each loop
-    Session = sessionmaker(bind=engine)
-    session = Session()
-
-    #getting the last updated camera
-    oldest_camera = session.query(CurrentCamera).order_by(asc(CurrentCamera.last_update)).first()
-
-    #if camera doesn't have a link (which is possible), mark as updated in db and continue (we haven't requested image yet)
-    if oldest_camera.snapshot is None:
-        pass_to_next_loop(session,oldest_camera,False,start_time, False, None)
-        continue
-
-    #this request replaces the old picture in the temp_storage_path
+def request_latest_cam_from_db(db_session):
+    bool_continue = False
     try:
-        urllib.request.urlretrieve(oldest_camera.snapshot, oldest_camera.temp_storage_path+'\\current.png')
+        oldest_camera = db_session.query(CurrentCamera).order_by(asc(CurrentCamera.last_update)).first()
+        if oldest_camera.snapshot is None:
+            bool_continue = True
+            return bool_continue,db_session,oldest_camera
+    except Exception as e:
+        logging.info(f"MainLoop - InitialDBRequest: {e}")
+        bool_continue = True
+        return bool_continue,db_session,None
+    return bool_continue,db_session,oldest_camera
 
-    # logic for handling ContentTooShortError which happens randomly
-    except ContentTooShortError as e:
-        #making it updated so the loop won't come back to it
-        pass_to_next_loop(session,oldest_camera,True,start_time, False, e)
-        continue
+def retrieve_image_from_url_into_storage(snapshot, storage_path):
+    bool_continue = False
+    try:
+        urllib.request.urlretrieve(snapshot, storage_path + '\\current.png')
+    except URLError as e:
+        bool_continue = True
+        return bool_continue,e
+    except Exception as e:
+        bool_continue = True
+        return bool_continue,e
+    return bool_continue, None
 
-    except HTTPError as e:
-        print(e, "Error")
-        #logic for handling HTTP error (which will probably happen repeatedly)
-        pass_to_next_loop(session,oldest_camera,True,start_time, False, e)
-        continue
+def perform_model_evaluation(retrieval_success, camera_path, model_path, confidence, evaluation_mode, conditions, image_name):
+    bool_continue = False
+    try:
+        if (not retrieval_success) and os.path.exists(camera_path) and os.path.exists(model_path):
+            try:
+                model_path_name = os.path.basename(model_path).strip('.pt')
+                count = process_image(camera_path, model_path, confidence, evaluation_mode, model_path_name, conditions, image_name)
+                return bool_continue,None,count
+            except Exception as e:
+                bool_continue = True
+                return bool_continue,e,None
+        else:
+            bool_continue = True
+            return bool_continue,Exception("Error in Process Image Parameters"),None
+    except OSError as e:
+        bool_continue = True
+        return bool_continue,e,None
 
-
-#   if oldest_camera.conditions == "Sunny":
-#       logic for determining model based on conditions
-
-    #apply model to image and get results
-    #do any calculations required for model to get results
-    model_results = process_image(oldest_camera.temp_storage_path+'\\current.png', (os.getenv('MODEL_PATH_1')))
-    #get the last updated entry for camera from traffic_count table
-
+def update_traffic_count(model_result, camera, session):
+    bool_continue = False
     current_datetime = datetime.now()
-
     try:
-        historical = session.query(TrafficCount).filter(TrafficCount.cam_id == oldest_camera.camera_id).order_by(asc(TrafficCount.traffic_time)).first()
+        historical = session.query(TrafficCount).filter(TrafficCount.cam_id == camera.camera_id).order_by(
+            asc(TrafficCount.traffic_time)).first()
         if historical is None:
             current_traffic_count = TrafficCount(
-                cam_id=oldest_camera.camera_id,
-                traffic_count=model_results,
+                cam_id=camera.camera_id,
+                traffic_count=model_result,
                 traffic_time=current_datetime,
-                max_traffic_count=model_results,
+                max_traffic_count=model_result,
                 max_traffic_time=current_datetime
             )
             session.add(current_traffic_count)
             session.commit()
-        #if the traffic is higher than the historical max, replace the historical max
-        elif historical.max_traffic_count<model_results:
+        # if the traffic is higher than the historical max, replace the historical max
+        elif historical.max_traffic_count < model_result:
             current_traffic_count = TrafficCount(
-                cam_id=oldest_camera.camera_id,
-                traffic_count = model_results,
+                cam_id=camera.camera_id,
+                traffic_count=model_result,
                 traffic_time=current_datetime,
-                max_traffic_count=model_results,
+                max_traffic_count=model_result,
                 max_traffic_time=current_datetime
             )
             session.add(current_traffic_count)
             session.commit()
         else:
             current_traffic_count = TrafficCount(
-                cam_id=oldest_camera.camera_id,
-                traffic_count=model_results,
+                cam_id=camera.camera_id,
+                traffic_count=model_result,
                 traffic_time=current_datetime,
                 max_traffic_count=historical.max_traffic_count,
                 max_traffic_time=historical.max_traffic_time
@@ -124,23 +127,71 @@ while True and i<309:
             session.add(current_traffic_count)
             session.commit()
 
-            # update the db with update time in current_cams
-        oldest_camera.last_update = current_datetime
-        pass_to_next_loop(session, oldest_camera, True, start_time, True, None)
-        i += 1
-        continue
-
+        return bool_continue, None, session
 
     except sqlalchemy.exc.SQLAlchemyError as e:
         logging.info(f"General SQLAlchemy error: {e}")
-        wait_until_time_is_up(start_time)
-        session.close()
-        continue
+        return True, e, session
     except Exception as e:
         logging.info(f"General SQLAlchemy ORM error: {e}")
-        wait_until_time_is_up(start_time)
-        session.close()
-        continue
+        return True, e, session
+
+
+timer = time.time()
+
+if __name__ == "__main__":
+    while True:
+        #start timer
+        start_time = time.time()
+        #starting and closing session each loop to ensure SQL writes are finished each loop
+        Session = sessionmaker(bind=engine)
+        session = Session()
+
+
+        #query database
+        db_result = request_latest_cam_from_db(session)
+
+        #handle errors for initial database query
+        if db_result[0]:
+            pass_to_next_loop(db_result[1], db_result[2], False, start_time, False, None)
+            continue
+
+        #ease of use label
+        camera = db_result[2]
+
+        #get image from url and store it to file
+        retrieval_result = retrieve_image_from_url_into_storage(camera.snapshot, camera.temp_storage_path)
+
+        #handle errors for url retrieval and storage
+        if retrieval_result[0]:
+            pass_to_next_loop(session, camera, True, start_time, False, retrieval_result[1])
+            continue
+
+        #getting name for when detections are saved
+        image_name = f"{camera.camera_id}_{datetime.now().strftime('%d%m%y_%H%M%S')}"
+        # apply model to image and get results
+
+        #gathering a detection every 10 minutes
+        evaluation_time = time.time() - timer
+        if evaluation_time > 600:
+            evaluation_mode = True
+            timer = time.time()
+        else:
+            evaluation_mode = False
+
+        #passing FALSE for retrieval_result[0]
+        model_results = perform_model_evaluation(retrieval_result[0],camera.temp_storage_path+'\\current.png', os.getenv('MODEL_PATH_1'), 0.5, evaluation_mode, camera.conditions, image_name)
+
+        #handle errors for model processing
+        if model_results[0]:
+            pass_to_next_loop(session, camera, True, start_time, False, model_results[1])
+            continue
+
+        update_result = update_traffic_count(model_results[2], camera, session)
+        pass_to_next_loop(session, camera, True, start_time, not update_result[0], update_result[1])
+
+
+
 
 
 
