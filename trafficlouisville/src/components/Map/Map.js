@@ -18,8 +18,8 @@ export default function Map({ center, zoom, trafficData = [] }) {
     }
 
     return (
-        <div style={{display: flex, height: "75vh", width: "75vw" }}>
-            <MapContainer center={center} zoom={zoom} style={{ height: "100%", width: "100%" }}>
+        <div style={{ height: "75vh", width: "75vw" }}>
+            <MapContainer center={center} zoom={zoom} style={{display: inline-flex, height: "100%", width: "100%" }}>
                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
                 {/* Render markers if trafficData is valid */}
