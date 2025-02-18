@@ -52,7 +52,7 @@ def fetch_traffic_data_from_db():
         if latest_traffic:
             density = latest_traffic.traffic_count / latest_traffic.max_traffic_count if latest_traffic.max_traffic_count else 0
             traffic_data.append({'density': density, 'lat': cam.latitude, 'lon': cam.longitude})
-            print(f"Cam ID: {cam.camera_id}, Density: {density}, Latitude: {cam.latitude}, Longitude: {cam.longitude}")
+            #print(f"Cam ID: {cam.camera_id}, Density: {density}, Latitude: {cam.latitude}, Longitude: {cam.longitude}")
 
 
     session.close()
