@@ -22,10 +22,10 @@ export default function Map({ center, zoom, trafficData = [] }) {
                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
                 {/* Render markers if trafficData is valid */}
-                {trafficData.map(([density, lat, lng], index) => (
+                {trafficData.map(({density, lat, lon}, index) => (
                     <CircleMarker
                         key={index}
-                        center={[lat, lng]}
+                        center={[lat, lon]}
                         radius={Math.max(density / 10, 5)} // Prevents markers from being too small
                         fillOpacity={0.6}
                         color="red"
