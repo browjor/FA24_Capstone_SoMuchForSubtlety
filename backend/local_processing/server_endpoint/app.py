@@ -17,6 +17,7 @@ app = Flask(__name__)
 
 
 def fetch_traffic_data_from_db():
+    global traffic_data
     traffic_data = []
     Session = sessionmaker(bind=engine)
     session = Session()
@@ -121,6 +122,7 @@ def get_traffic_data():
 
     return jsonify({
         "data": traffic_data,
+        "timestamp": response_timestamp,
         "hmac": response_hmac  # Send signed HMAC to frontend
     })
 
