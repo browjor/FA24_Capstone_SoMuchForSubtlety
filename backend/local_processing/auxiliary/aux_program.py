@@ -5,12 +5,24 @@ from datetime import datetime
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from backend.database.create_db import CurrentCamera
-from backend.database.create_cam_weather_zones import zones
 import logging
 
 load_dotenv()
 request_string = os.getenv("MAP_SERVER_REQUEST")
 engine = create_engine(os.getenv('SQLite_DB_LOC'))
+
+zones = [
+    (1,38.27,-85.81), #top left
+    (2,38.26, -85.73), #top 2nd from left
+    (3,38.28, -85.64), #top 3rd from left
+    (4,38.29, -85.52), #top 4th from left (farthest right)
+    (5,38.19, -85.83), #middle left
+    (6,38.20, -85.71), #middle 2nd from left
+    (7,38.22, -85.58), #slight above middle 3rd from left
+    (8,38.12, -85.78), #bottom leftmost
+    (9,38.12, -85.64), #bottom 2nd from left
+    (10,38.19, -85.51) #middle far right
+]
 
 zones_with_condition = []
 for zone in zones:
@@ -90,7 +102,6 @@ def get_current_weather(lat, long):
     raise Exception("Current weather request could not be made")
 
 def measure_conditions(zone_weather):
-
     #checking for precipitation
     internal_weather_code = 0
     current_dict = zone_weather['current']
@@ -180,7 +191,6 @@ while True:
             daily_conditions = make_daily_request()
             sunrise_time = daily_conditions[0]
             sunset_time = daily_conditions[1]
-            start_indicator = False
             logging.info(f"Updated sunrise_time: {sunrise_time}, sunset_time: {sunset_time}")
 
         #iterating through geographic zones
@@ -192,24 +202,37 @@ while True:
             if expected_weather[1][0]:
                 imminent_weather_change = True
 
-            #if there are changes in current conditions, update the database
-            if expected_weather[0] != zone[3]:
-                logging.info(f"Condition change detected for zone {zone[0]}: {zone[3]} -> {expected_weather[0]}")
+
+            if start_indicator:
+                logging.info(f"Initial condition changed for zone {zone[0]}: {zone[3]} -> {expected_weather[0]}")
                 zone[3] = expected_weather[0]
                 try:
                     all_cameras_in_zone =session.query(CurrentCamera).filter(CurrentCamera.zone == zone[0]).all()
                     for camera in all_cameras_in_zone:
                         camera.conditions = expected_weather[0]
-
                     session.commit()
                     logging.info(f"Database updated for zone {zone[0]}")
                 except Exception as e:
                     session.rollback()
                     logging.error(f"Error updating database for zone {zone[0]}: {e}")
+            #if there are changes in current conditions, update the database
+            else:
+                if expected_weather[0] != zone[3]:
+                    logging.info(f"Condition change detected for zone {zone[0]}: {zone[3]} -> {expected_weather[0]}")
+                    zone[3] = expected_weather[0]
+                    try:
+                        all_cameras_in_zone =session.query(CurrentCamera).filter(CurrentCamera.zone == zone[0]).all()
+                        for camera in all_cameras_in_zone:
+                            camera.conditions = expected_weather[0]
 
-        session.commit()
+                        session.commit()
+                        logging.info(f"Database updated for zone {zone[0]}")
+                    except Exception as e:
+                        session.rollback()
+                        logging.error(f"Error updating database for zone {zone[0]}: {e}")
+
         session.close()
-
+        start_indicator = False
         #normal hourly checks = 3600 seconds
         #half hourly checks on imminent change = 1800 seconds
         current_date_and_time = datetime.fromtimestamp(time.time())
@@ -245,7 +268,7 @@ while True:
                 time.sleep(3600)
 
     except Exception as e:
-        logging.error(f"Unhandled error in main loop: {e}")
+        logging.error(f"Unhandled error in auxiliary loop: {e}")
         break
 
 
