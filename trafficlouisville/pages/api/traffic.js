@@ -7,17 +7,24 @@ const BACKEND_URL = `http://${process.env.BACKEND_SERVER_IPV4}:${process.env.BAC
 
 function verifyResponseHMAC(unformatted, timestamp, receivedHMAC) {
     const data = unformatted.map(entry => ({
-        density: parseFloat(entry.density),  // Ensures density is always a float
+        density: entry.density === '0.0' ? '0.0' : parseFloat(entry.density),  // Ensures density is always a float
         lat: entry.lat,
         lon: entry.lon
     }));
     const message = JSON.stringify({ data, timestamp: timestamp.toString() });
-    //console.log(message)// Ensure timestamp is inside JSON
+    console.log(message)// Ensure timestamp is inside JSON
     const expectedHMAC = crypto.createHmac("sha256", SECRET_KEY)
         .update(Buffer.from(message, "utf-8"))  // Ensure proper encoding
         .digest("hex");
-
     return crypto.timingSafeEqual(Buffer.from(receivedHMAC, "utf-8"), Buffer.from(expectedHMAC, "utf-8"));
+}
+
+function returnValidZeroArray(formatted) {
+    return formatted.map(entry => ({
+        density: entry.density === '0.0' ? 0 : parseFloat(entry.density),
+        lat: entry.lat,
+        lon: entry.lon
+    }))
 }
 
 export default async function handler(req, res) {
@@ -46,12 +53,14 @@ export default async function handler(req, res) {
             return res.status(403).json({ error: "Invalid HMAC signature" });
         }
 
+        data = returnValidZeroArray(data)
+
         if (!Array.isArray(data)) {
             console.warn("Received non-array traffic data, converting:", data);
             data = data ? [data] : [];  // Convert non-array to array
         }
 
-        res.status(200).json({ data});
+        res.status(200).json({data});
     } catch (error) {
         console.error("Error fetching traffic data:", error.message);
         res.status(500).json({ error: "Failed to fetch traffic data" });

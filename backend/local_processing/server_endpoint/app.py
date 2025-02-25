@@ -1,6 +1,5 @@
 from flask import Flask, jsonify, request
 import hmac, hashlib, time, os, threading, json
-from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, func
 from sqlalchemy.orm import sessionmaker
@@ -49,9 +48,11 @@ def fetch_traffic_data_from_db():
 
         #may have an issue with float formatting
         if latest_traffic:
-            density = latest_traffic.traffic_count / latest_traffic.max_traffic_count if latest_traffic.max_traffic_count else 0
+            density = latest_traffic.traffic_count / latest_traffic.max_traffic_count if latest_traffic.max_traffic_count else '0'
             if density == 1.0:
                 density = int(density)
+            if density == 0:
+                density = '0.0'
             traffic_data.append({'density': density, 'lat': cam.latitude, 'lon': cam.longitude})
             #print(f"Cam ID: {cam.camera_id}, Density: {density}, Latitude: {cam.latitude}, Longitude: {cam.longitude}")
 
@@ -73,13 +74,14 @@ def update_traffic_data():
             print("Traffic Data Updated")
             data_condition.notify_all()
 
-        time.sleep(9)  # Refresh every 9 seconds
+        time.sleep(20)  # Refresh every 9 seconds
 
 
 def verify_hmac(request):
     received_hmac = request.headers.get("X-HMAC-Signature")
     timestamp = request.headers.get("X-Timestamp")
-
+    print("Received Hmac: "+received_hmac)
+    print("Received Timestamp: "+timestamp)
     if not received_hmac or not timestamp:
         return False
 
@@ -89,11 +91,12 @@ def verify_hmac(request):
         return False
 
     if abs(time.time() - timestamp) > 300:
+        print("Time stamp out of date")
         return False
 
     message = f"{timestamp}".encode()
     expected_hmac = hmac.new(SHARED_SECRET.encode(), message, hashlib.sha256).hexdigest()
-
+    print("Expected Hmac: " +expected_hmac)
     return hmac.compare_digest(received_hmac, expected_hmac)
 
 #matching json with , and : so it'll be received right on the frontend
@@ -107,6 +110,7 @@ def generate_response_hmac(response_json):
 
 @app.route("/latest-traffic", methods=["GET"])
 def get_traffic_data():
+    print(request.headers)
     if not verify_hmac(request):
         return jsonify({"error": "Unauthorized"}), 403
 
@@ -114,7 +118,7 @@ def get_traffic_data():
     #telling main thread to not use traffic_data list while being updated
     with data_condition:
         #timeout after 5 seconds of list being updated
-        notified = data_condition.wait(timeout=5)
+        notified = data_condition.wait(timeout=15)
         if not notified:
             print("Timeout waiting for traffic data update.")
             return jsonify({"error": "Traffic data update timeout"}), 500
