@@ -1,15 +1,15 @@
-from logging import StreamHandler
 from dotenv import load_dotenv
-import os, time, requests
+import os, time, requests, csv
 from datetime import datetime
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, desc
 from sqlalchemy.orm import sessionmaker
-from backend.database.create_db import CurrentCamera
+from backend.database.create_db import CurrentCamera, TrafficCount
 import logging
 
 load_dotenv()
 request_string = os.getenv("MAP_SERVER_REQUEST")
 engine = create_engine(os.getenv('SQLite_DB_LOC'))
+csv_file_path = os.getenv('DB_BACKUP_PATH')
 
 zones = [
     (1,38.27,-85.81), #top left
@@ -29,37 +29,68 @@ for zone in zones:
     zones_with_condition.append([zone[0], zone[1], zone[2], 0])
 
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.FileHandler("Aux_Loop.log"),
+        logging.StreamHandler()
+    ]
+)
+
+def backup_db(backup_session):
+    delete_occurred = False
+    try:
+        logging.info("Starting DB Backup")
+        # get a count
+        total_entries = backup_session.query(TrafficCount).count()
+        logging.info(f"Total count of records in DB: {total_entries}")
+        if total_entries > 800:
+            entries_to_export = backup_session.query(TrafficCount).order_by(desc(TrafficCount.traffic_time))[200:]
+
+            with open(csv_file_path, mode='a', newline='') as csvfile:
+                writer = csv.writer(csvfile)
+                # if first time writing
+                if os.path.getsize(csv_file_path) == 0:
+                    writer.writerow(
+                        ['id', 'cam_id', 'traffic_count', 'traffic_time', 'max_traffic_count', 'max_traffic_time'])
+                for entry in entries_to_export:
+                    writer.writerow(
+                        [entry.id, entry.cam_id, entry.traffic_count, entry.traffic_time, entry.max_traffic_count,
+                         entry.max_traffic_time])
+
+
+            for entry in entries_to_export:
+                backup_session.delete(entry)
+            logging.info(f"{len(entries_to_export)} records removed from database.")
+            delete_occurred = True
+            backup_session.commit()
+        else:
+            logging.info(f"No records removed from database.")
+        #return session, the error, whether entries were deleted
+        return backup_session, None, delete_occurred
+    except Exception as e:
+        logging.error(f"Error in DB Backup: {e}")
+        return backup_session, e, delete_occurred
+
+
 def send_web_request(request_str):
     try:
         response = requests.get(request_str, timeout=5)
         if response.status_code == 200:
             return response.json()
         else:
-            print(f"Request to {request_str} returned status code {response.status_code}")
+            logging.error(f"Request to {request_str} returned status code {response.status_code}")
             return None
     except requests.exceptions.Timeout:
-        print(f"Request to {request_str} timed out.")
+        logging.error(f"Request to {request_str} timed out.")
         return None
     except requests.exceptions.ConnectionError as e:
-        print(f"Connection error occurred for {request_str}: {e}")
+        logging.error(f"Connection error occurred for {request_str}: {e}")
         return None
     except requests.exceptions.RequestException as e:
-        print(f"An error occurred while making the request to {request_str}: {e}")
+        logging.error(f"An error occurred while making the request to {request_str}: {e}")
         return None
-
-
-#look for offline cameras in json response, look for offline cameras in database
-def prepare_changes_in_cam_info(data):
-    #get offline list from data
-    offline_list = []
-    features = data.get('features', [])
-    for feature in features:
-        if feature[0]['attributes']['status'] == 'Offline':
-            offline_list.append([feature[0]['attributes']['id'],
-                                 feature[0]['attributes']['oid'],
-                                 feature[0]['attributes']['status']])
-
-
 
 
 def process_daily_weather_request(data, retry=5):
@@ -69,7 +100,7 @@ def process_daily_weather_request(data, retry=5):
             sunset = data['daily']['sunset'][0]
             return sunrise, sunset
         except KeyError:
-            print("Daily key is missing from request")
+            logging.error("Daily key is missing from request")
     raise Exception("Dict from daily request had nothing to process")
 
 def make_daily_request(retry = 5):
@@ -84,7 +115,7 @@ def make_daily_request(retry = 5):
         if type(json) is dict:
             return process_daily_weather_request(json)
         else:
-            print("Request to open-meteo failed")
+            logging.error("Request to open-meteo failed")
             time.sleep(60)
     raise Exception("Daily weather request could not be made")
 
@@ -97,7 +128,7 @@ def get_current_weather(lat, long):
         if type(json) is dict:
             return json
         else:
-            print("Request to open-meteo failed")
+            logging.error("Request to open-meteo failed")
             time.sleep(20)
     raise Exception("Current weather request could not be made")
 
@@ -158,12 +189,7 @@ def measure_conditions(zone_weather):
 
     return internal_weather_code, expected_changes
 
-#logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[StreamHandler()]
-)
+
 
 #starter
 sunrise_time = 0
@@ -202,7 +228,7 @@ while True:
             if expected_weather[1][0]:
                 imminent_weather_change = True
 
-
+            #if just starting the auxiliary loop up, replace previous condition with current
             if start_indicator:
                 logging.info(f"Initial condition changed for zone {zone[0]}: {zone[3]} -> {expected_weather[0]}")
                 zone[3] = expected_weather[0]
@@ -210,6 +236,7 @@ while True:
                     all_cameras_in_zone =session.query(CurrentCamera).filter(CurrentCamera.zone == zone[0]).all()
                     for camera in all_cameras_in_zone:
                         camera.conditions = expected_weather[0]
+                        camera.cam_status = 'Online'
                     session.commit()
                     logging.info(f"Database updated for zone {zone[0]}")
                 except Exception as e:
@@ -225,13 +252,18 @@ while True:
                         for camera in all_cameras_in_zone:
                             camera.conditions = expected_weather[0]
 
+
                         session.commit()
                         logging.info(f"Database updated for zone {zone[0]}")
                     except Exception as e:
                         session.rollback()
                         logging.error(f"Error updating database for zone {zone[0]}: {e}")
 
-        session.close()
+        result = backup_db(session)
+        if result[1] is not None:
+            result[0].rollback()
+        result[0].close()
+
         start_indicator = False
         #normal hourly checks = 3600 seconds
         #half hourly checks on imminent change = 1800 seconds

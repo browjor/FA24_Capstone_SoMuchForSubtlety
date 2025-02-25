@@ -5,7 +5,7 @@ from unittest.mock import patch
 from datetime import timedelta
 
 
-class DatabaseIntegrationTest(unittest.TestCase):
+class MainIntegrationTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Initialize test database
@@ -26,7 +26,7 @@ class DatabaseIntegrationTest(unittest.TestCase):
         self.session.rollback()
         self.session.close()
 
-class TestMainProgramIntegration(DatabaseIntegrationTest):
+class TestMainProgramIntegration(MainIntegrationTest):
     def test_main_program_integ_SUCCESS(self):
         # Setup a dummy camera entry
         test_cam = CurrentCamera(
