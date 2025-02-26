@@ -11,54 +11,45 @@ server_ipv4 = os.getenv('SERVER_IPV4')
 server_port = int(os.getenv('SERVER_PORT'))
 
 engine = create_engine(os.getenv('SQLite_DB_LOC'))
-data_condition = threading.Condition()
+data_lock = threading.Lock()
 traffic_data = []
 app = Flask(__name__)
 
 def fetch_traffic_data_from_db():
-    traffic_data = []
+    new_traffic_data = []
     Session = sessionmaker(bind=engine)
     session = Session()
 
-    latest_cameras = (
-        #get distinct current cam_id, lat, and long where online
-        session.query(
-            CurrentCamera.camera_id,
-            CurrentCamera.latitude,
-            CurrentCamera.longitude
-        )
-        .filter(CurrentCamera.cam_status == "Online")
-        .order_by(CurrentCamera.last_update.desc())
-        .distinct(CurrentCamera.camera_id)
-        .all()
-    )
-
-    #may need to be changed, it's pretty intensive to do a hundred queries but if it works it works
-    for cam in latest_cameras:
-        #by cam get single traffic count, max_traffic_count where cam_id and latest time
-        latest_traffic = (
+    try:
+        latest_data = (
             session.query(
+                CurrentCamera.camera_id,
+                CurrentCamera.latitude,
+                CurrentCamera.longitude,
                 TrafficCount.traffic_count,
                 TrafficCount.max_traffic_count
             )
-            .filter(TrafficCount.cam_id == cam.camera_id)
-            .order_by(TrafficCount.traffic_time.desc())
-            .first()
+            .join(TrafficCount, CurrentCamera.camera_id == TrafficCount.cam_id)
+            .filter(CurrentCamera.cam_status == "Online")
+            .order_by(CurrentCamera.last_update.desc(), TrafficCount.traffic_time.desc())
+            .distinct(CurrentCamera.camera_id)  # Ensures distinct camera entries
+            .all()
         )
-
-        #may have an issue with float formatting
-        if latest_traffic:
-            density = latest_traffic.traffic_count / latest_traffic.max_traffic_count if latest_traffic.max_traffic_count else '0'
-            if density == 1.0:
-                density = int(density)
-            if density == 0:
-                density = '0.0'
-            traffic_data.append({'density': density, 'lat': cam.latitude, 'lon': cam.longitude})
-            #print(f"Cam ID: {cam.camera_id}, Density: {density}, Latitude: {cam.latitude}, Longitude: {cam.longitude}")
-
-
+    except Exception as e:
+        print(e)
+        session.rollback()
+        session.close()
+        return []
+    for cam in latest_data:
+        density = cam.traffic_count / cam.max_traffic_count if cam.max_traffic_count else '0.0'
+        if density == 1.0:
+            density = int(density)
+        if density == 0:
+            density = '0.0'
+        new_traffic_data.append({'density': density, 'lat': cam.latitude, 'lon': cam.longitude})
+        #print(f"Cam ID: {cam.camera_id}, Density: {density}, Latitude: {cam.latitude}, Longitude: {cam.longitude}")
     session.close()
-    return traffic_data
+    return new_traffic_data
 
 
 
@@ -68,14 +59,13 @@ def update_traffic_data():
     while True:
         new_data = fetch_traffic_data_from_db()
 
-        with data_condition:
-            traffic_data.clear()
-            traffic_data.extend(new_data)
-            print("Traffic Data Updated")
-            data_condition.notify_all()
+        if len(new_data) > 0:
+            with data_lock:
+                traffic_data.clear()
+                traffic_data.extend(new_data)
+                print("Traffic Data Updated")
 
-        time.sleep(20)  # Refresh every 9 seconds
-
+        time.sleep(10)
 
 def verify_hmac(request):
     received_hmac = request.headers.get("X-HMAC-Signature")
@@ -110,27 +100,23 @@ def generate_response_hmac(response_json):
 
 @app.route("/latest-traffic", methods=["GET"])
 def get_traffic_data():
-    print(request.headers)
     if not verify_hmac(request):
         return jsonify({"error": "Unauthorized"}), 403
 
     response_timestamp = str(int(time.time()))
     #telling main thread to not use traffic_data list while being updated
-    with data_condition:
-        #timeout after 5 seconds of list being updated
-        notified = data_condition.wait(timeout=15)
-        if not notified:
-            print("Timeout waiting for traffic data update.")
-            return jsonify({"error": "Traffic data update timeout"}), 500
-
-        response_json = {"data": traffic_data, "timestamp": response_timestamp}
-        response_hmac = generate_response_hmac(response_json)
-        print(response_hmac)
-    return jsonify({
-        "data": traffic_data,
-        "timestamp": response_timestamp,
-        "hmac": response_hmac  # Send signed HMAC to frontend
-    })
+    with data_lock:
+        try:
+            response_json = {"data": traffic_data, "timestamp": response_timestamp}
+            response_hmac = generate_response_hmac(response_json)
+            #print(response_hmac)
+            return jsonify({
+                "data": traffic_data,
+                "timestamp": response_timestamp,
+                "hmac": response_hmac  # Send signed HMAC to frontend
+            })
+        except Exception as e:
+            return jsonify({"error": "Unable to Fulfill Request"}), 500
 
 if __name__ == "__main__":
     threading.Thread(target=update_traffic_data, daemon=True).start()
