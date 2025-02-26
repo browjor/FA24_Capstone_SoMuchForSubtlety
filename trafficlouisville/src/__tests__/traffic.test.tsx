@@ -1,4 +1,5 @@
 import handler from '../../pages/api/traffic'
+import { mockTrafficData } from './mockTrafficData'
 
 describe('Traffic API Handler', () => {
   const mockRes = {
@@ -23,4 +24,26 @@ describe('Traffic API Handler', () => {
     expect(mockRes.status).toHaveBeenCalledWith(500)
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Failed to fetch traffic data' })
   })
-})
+
+  test('returns traffic data successfully for GET request', async () => {
+    const mockReq = { method: 'GET' }
+    
+    // Mock the fetch response directly with the structure we expect
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({
+        data: mockTrafficData.data,
+        timestamp: mockTrafficData.timestamp
+      })
+    })
+  
+    await handler(mockReq, mockRes)
+    
+    expect(mockRes.status).toHaveBeenCalledWith(200)
+    expect(mockRes.json).toHaveBeenCalledWith({
+      data: mockTrafficData.data,
+      timestamp: mockTrafficData.timestamp
+    })
+  })
+  
+    })
