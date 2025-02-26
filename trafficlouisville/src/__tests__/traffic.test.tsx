@@ -1,8 +1,9 @@
 import handler from "../../pages/api/traffic";
 import { mockTrafficData } from "./mockTrafficData";
 import axios from "axios";
+import crypto from "crypto";
 
-// ✅ Ensure axios is properly mocked
+// ✅ Mock axios module
 jest.mock("axios");
 
 describe("Traffic API Handler", () => {
@@ -13,6 +14,7 @@ describe("Traffic API Handler", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    process.env.SHARED_SECRET = "test-secret-key"; // ✅ Ensure SECRET_KEY exists
   });
 
   test("rejects non-GET requests", async () => {
@@ -25,8 +27,8 @@ describe("Traffic API Handler", () => {
   test("returns 500 when server error occurs", async () => {
     const mockReq = { method: "GET" };
 
-    // ✅ Mock the entire axios module, ensuring get returns a rejected Promise
-    axios.get = jest.fn().mockRejectedValue(new Error("Server Error"));
+    // ✅ Mock axios failure
+    axios.get.mockRejectedValueOnce(new Error("Server Error"));
 
     await handler(mockReq, mockRes);
     expect(mockRes.status).toHaveBeenCalledWith(500);
@@ -34,13 +36,31 @@ describe("Traffic API Handler", () => {
   });
 
   test("returns traffic data successfully for GET request", async () => {
-    const mockReq = { method: "GET" };
+    const mockReq = {
+      method: "GET",
+      headers: {
+        "X-Timestamp": "1739894801",
+        "X-HMAC-Signature": "test-signature"
+      }
+    };
 
-    // ✅ Mock axios.get to return the expected response
-    axios.get = jest.fn().mockResolvedValue({
+    // ✅ Compute valid HMAC for mockTrafficData
+    const timestamp = mockTrafficData.timestamp.toString();
+    const message = JSON.stringify({
+      data: mockTrafficData.data,
+      timestamp
+    });
+
+    const expectedHMAC = crypto.createHmac("sha256", process.env.SHARED_SECRET)
+      .update(Buffer.from(message, "utf-8"))
+      .digest("hex");
+
+    // ✅ Properly mock axios response
+    axios.get.mockResolvedValueOnce({
       data: {
         data: mockTrafficData.data,
-        timestamp: mockTrafficData.timestamp
+        timestamp: mockTrafficData.timestamp,
+        hmac: expectedHMAC
       }
     });
 
@@ -48,8 +68,19 @@ describe("Traffic API Handler", () => {
 
     expect(mockRes.status).toHaveBeenCalledWith(200);
     expect(mockRes.json).toHaveBeenCalledWith({
-      data: mockTrafficData.data,
-      timestamp: mockTrafficData.timestamp
+      data: mockTrafficData.data.map(entry => ({
+        density: entry.density === "0.0" ? 0 : parseFloat(entry.density),
+        lat: entry.lat,
+        lon: entry.lon
+      }))
+    });
+
+    // ✅ Validate axios request format
+    expect(axios.get).toHaveBeenCalledWith(expect.stringContaining("/latest-traffic"), {
+      headers: expect.objectContaining({
+        "X-Timestamp": expect.any(String),
+        "X-HMAC-Signature": expect.any(String)
+      })
     });
   });
 });
