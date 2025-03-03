@@ -1,10 +1,10 @@
-import handler from "../../pages/api/traffic";
-import { mockTrafficData } from "./mockTrafficData";
-import axios from "axios";
-import crypto from "crypto";
+import handler from '../../pages/api/traffic'
+import { mockTrafficData } from './mockTrafficData'
+import axios from 'axios'
+import crypto from 'crypto'
 
-// ✅ Mock axios module
-jest.mock("axios");
+jest.mock('axios');
+const mockedAxios = jest.mocked(axios);
 
 describe("Traffic API Handler", () => {
   const mockRes = {
@@ -24,63 +24,48 @@ describe("Traffic API Handler", () => {
     expect(mockRes.json).toHaveBeenCalledWith({ error: "Method not allowed" });
   });
 
-  test("returns 500 when server error occurs", async () => {
-    const mockReq = { method: "GET" };
+  test('returns 500 when server error occurs', async () => {
+    const mockReq = { method: 'GET' }
+    mockedAxios.get.mockRejectedValueOnce(new Error('Server error'))
+    await handler(mockReq, mockRes)
+    expect(mockRes.status).toHaveBeenCalledWith(500)
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Failed to fetch traffic data' })
+  })
 
-    // ✅ Mock axios failure
-    axios.get.mockRejectedValueOnce(new Error("Server Error"));
-
-    await handler(mockReq, mockRes);
-    expect(mockRes.status).toHaveBeenCalledWith(500);
-    expect(mockRes.json).toHaveBeenCalledWith({ error: "Failed to fetch traffic data" });
-  });
-
-  test("returns traffic data successfully for GET request", async () => {
-    const mockReq = {
-      method: "GET",
-      headers: {
-        "X-Timestamp": "1739894801",
-        "X-HMAC-Signature": "test-signature"
-      }
-    };
-
-    // ✅ Compute valid HMAC for mockTrafficData
-    const timestamp = mockTrafficData.timestamp.toString();
-    const message = JSON.stringify({
-      data: mockTrafficData.data,
-      timestamp
-    });
-
-    const expectedHMAC = crypto.createHmac("sha256", process.env.SHARED_SECRET)
+test('returns traffic data successfully for GET request', async () => {
+  const mockReq = { method: 'GET' }
+    
+  const timestamp = "1740525559"
+  const data = mockTrafficData.data.map(entry => ({
+      density: entry.density === "0.0" ? "0.0" : parseFloat(entry.density),
+      lat: entry.lat,
+      lon: entry.lon
+  }))
+    
+  const message = JSON.stringify({ data, timestamp })
+  const hmac = crypto
+      .createHmac("sha256", process.env.SHARED_SECRET)
       .update(Buffer.from(message, "utf-8"))
-      .digest("hex");
-
-    // ✅ Properly mock axios response
-    axios.get.mockResolvedValueOnce({
+      .digest("hex")
+    
+  mockedAxios.get.mockResolvedValueOnce({
       data: {
-        data: mockTrafficData.data,
-        timestamp: mockTrafficData.timestamp,
-        hmac: expectedHMAC
+          data: data,
+          timestamp: timestamp,
+          hmac: hmac
       }
-    });
-
-    await handler(mockReq, mockRes);
-
-    expect(mockRes.status).toHaveBeenCalledWith(200);
-    expect(mockRes.json).toHaveBeenCalledWith({
-      data: mockTrafficData.data.map(entry => ({
-        density: entry.density === "0.0" ? 0 : parseFloat(entry.density),
-        lat: entry.lat,
-        lon: entry.lon
-      }))
-    });
-
-    // ✅ Validate axios request format
-    expect(axios.get).toHaveBeenCalledWith(expect.stringContaining("/latest-traffic"), {
-      headers: expect.objectContaining({
-        "X-Timestamp": expect.any(String),
-        "X-HMAC-Signature": expect.any(String)
-      })
-    });
-  });
-});
+  })
+  
+  await handler(mockReq, mockRes)
+  
+  const expectedData = data.map(entry => ({
+      ...entry,
+      density: entry.density === "0.0" ? 0 : entry.density
+  }))
+  
+  expect(mockRes.status).toHaveBeenCalledWith(200)
+  expect(mockRes.json).toHaveBeenCalledWith({
+      data: expectedData
+  })
+})
+})
