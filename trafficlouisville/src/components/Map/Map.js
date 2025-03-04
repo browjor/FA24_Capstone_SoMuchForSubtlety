@@ -7,8 +7,14 @@ const TileLayer = dynamic(() => import("react-leaflet").then(mod => mod.TileLaye
 const CircleMarker = dynamic(() => import("react-leaflet").then(mod => mod.CircleMarker), { ssr: false });
 
 export default function Map({ center, zoom, trafficData = [] }) {
-    // Log trafficData to ensure it's coming through correctly
-    //console.log("trafficData:", trafficData.data);
+    // Function to determine color based on density
+    const getColor = (density) => {
+        if (density < 0.2) return "green";
+        if (density < 0.4) return "lime";
+        if (density < 0.6) return "yellow";
+        if (density < 0.8) return "orange";
+        return "red";
+    };
 
     // Handle the case where trafficData might not be in the correct format
     if (!Array.isArray(trafficData.data)) {
@@ -18,17 +24,17 @@ export default function Map({ center, zoom, trafficData = [] }) {
 
     return (
         <div className="flex" style={{ height: "75vh", width: "70vw" }}>
-            <MapContainer className="flex" center={center} zoom={zoom} style={{height: "100%", width: "100%" }}>
+            <MapContainer className="flex" center={center} zoom={zoom} style={{ height: "100%", width: "100%" }}>
                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
                 {/* Render markers if trafficData is valid */}
-                {trafficData.data.map(({density, lat, lon}, index) => (
+                {trafficData.data.map(({ density, lat, lon }, index) => (
                     <CircleMarker
                         key={index}
                         center={[lat, lon]}
                         radius={Math.max(density / 10, 5)} // Prevents markers from being too small
                         fillOpacity={0.6}
-                        color="red"
+                        color={getColor(density)} // Apply dynamic color
                     />
                 ))}
             </MapContainer>
