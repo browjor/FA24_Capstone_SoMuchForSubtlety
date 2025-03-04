@@ -8,27 +8,22 @@ from datetime import timedelta
 class MainIntegrationTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        # Initialize test database
         cls.engine = create_engine(os.getenv('TEST_SQLITE_DB_LOC'))
         Base.metadata.create_all(cls.engine)
         cls.Session = sessionmaker(bind=cls.engine)
     @classmethod
     def tearDownClass(cls):
-        # Drop all tables after tests
         Base.metadata.drop_all(cls.engine)
 
     def setUp(self):
-        # Create a new session for each test
         self.session = self.Session()
 
     def tearDown(self):
-        # Rollback any session transactions and close after each test
         self.session.rollback()
         self.session.close()
 
 class TestMainProgramIntegration(MainIntegrationTest):
     def test_main_program_integ_SUCCESS(self):
-        # Setup a dummy camera entry
         test_cam = CurrentCamera(
             camera_id=99999,
             cam_status="Online",

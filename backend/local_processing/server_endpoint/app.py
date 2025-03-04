@@ -80,11 +80,12 @@ def update_traffic_data():
 def verify_hmac(request):
     received_hmac = request.headers.get("X-HMAC-Signature")
     timestamp = request.headers.get("X-Timestamp")
-    print("Received Hmac: "+received_hmac)
-    print("Received Timestamp: "+timestamp)
+    
     if not received_hmac or not timestamp:
         return False
 
+    print("Received Hmac: " + received_hmac)
+    print("Received Timestamp: " + timestamp)
     try:
         timestamp = int(timestamp)
     except ValueError:
