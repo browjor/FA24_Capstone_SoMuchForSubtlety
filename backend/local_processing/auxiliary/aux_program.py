@@ -6,10 +6,7 @@ from sqlalchemy.orm import sessionmaker
 from backend.database.create_db import CurrentCamera, TrafficCount
 import logging
 
-load_dotenv()
-request_string = os.getenv("MAP_SERVER_REQUEST")
-engine = create_engine(os.getenv('SQLite_DB_LOC'))
-csv_file_path = os.getenv('DB_BACKUP_PATH')
+
 
 zones = [
     (1,38.27,-85.81), #top left
@@ -203,6 +200,11 @@ logging.info("Starting the main auxiliary loop.")#main auxiliary loop
 
 ###ADD IN HOURLY CHECK OF API FOR CAM STATUS
 ###NEEDED FOR PASS_TO_NEXT_LOOP in MAIN PROGRAM
+load_dotenv()
+request_string = os.getenv("MAP_SERVER_REQUEST")
+engine = create_engine(os.getenv('SQLite_DB_LOC'))
+csv_file_path = os.getenv('DB_BACKUP_PATH')
+
 
 while True:
     try:

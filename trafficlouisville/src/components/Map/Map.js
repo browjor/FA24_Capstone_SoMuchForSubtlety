@@ -1,6 +1,5 @@
 import dynamic from "next/dynamic";
 import React from "react";
-import styles from "./Map.module.scss";
 
 // Dynamically import Leaflet components to avoid SSR issues
 const MapContainer = dynamic(() => import("react-leaflet").then(mod => mod.MapContainer), { ssr: false });

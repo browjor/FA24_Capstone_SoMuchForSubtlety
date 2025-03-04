@@ -43,9 +43,12 @@
     "ts-jest": "^29.2.5"
   },
   "jest": {
+    "testEnvironment": "jsdom",
+    "setupFilesAfterEnv": [
+      "<rootDir>/jest.setup.js"
+    ],
     "transform": {
       "^.+\\.(js|jsx|ts|tsx)$": "babel-jest"
-    },
-    "testEnvironment": "jsdom"
+    }
   }
 }
