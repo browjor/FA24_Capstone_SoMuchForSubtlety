@@ -24,7 +24,13 @@ export default function Map({ center, zoom, trafficData = [] }) {
 
     return (
         <div className="flex" style={{ height: "75vh", width: "70vw" }}>
-            <MapContainer className="flex" center={center} zoom={zoom} style={{ height: "100%", width: "100%" }}>
+            <MapContainer
+                key={JSON.stringify(trafficData)}  // Forces a re-render when trafficData changes
+                className="flex"
+                center={center}
+                zoom={zoom}
+                style={{ height: "100%", width: "100%" }}
+            >
                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
                 {/* Render markers if trafficData is valid */}
@@ -34,7 +40,7 @@ export default function Map({ center, zoom, trafficData = [] }) {
                         center={[lat, lon]}
                         radius={Math.max(density / 10, 5)} // Prevents markers from being too small
                         fillOpacity={0.6}
-                        color={getColor(density)} // Apply dynamic color
+                        color={getColor(density)}
                     />
                 ))}
             </MapContainer>

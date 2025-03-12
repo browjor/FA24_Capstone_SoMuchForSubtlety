@@ -15,6 +15,7 @@ data_lock = threading.Lock()
 traffic_data = []
 app = Flask(__name__)
 
+
 def fetch_traffic_data_from_db():
     new_traffic_data = []
     Session = sessionmaker(bind=engine)
@@ -31,10 +32,15 @@ def fetch_traffic_data_from_db():
             )
             .join(TrafficCount, CurrentCamera.camera_id == TrafficCount.cam_id)
             .filter(CurrentCamera.cam_status == "Online")
-            .order_by(CurrentCamera.last_update.desc(), TrafficCount.traffic_time.desc())
-            .distinct(CurrentCamera.camera_id)  # Ensures distinct camera entries
-            .all()
-        )
+            .filter(
+                TrafficCount.traffic_time == session.query(func.max(TrafficCount.traffic_time))
+                .filter(TrafficCount.cam_id == CurrentCamera.camera_id)
+                .correlate(CurrentCamera)
+                .scalar_subquery()
+            )
+            .order_by(CurrentCamera.last_update.desc())
+        ).all()
+
     except Exception as e:
         print(e)
         session.rollback()
@@ -47,13 +53,12 @@ def fetch_traffic_data_from_db():
         if density == 0:
             density = '0.0'
         new_traffic_data.append({'density': density, 'lat': cam.latitude, 'lon': cam.longitude})
-        #print(f"Cam ID: {cam.camera_id}, Density: {density}, Latitude: {cam.latitude}, Longitude: {cam.longitude}")
+        # print(f"Cam ID: {cam.camera_id}, Density: {density}, Latitude: {cam.latitude}, Longitude: {cam.longitude}")
     session.close()
     return new_traffic_data
 
 
-
-#thread to update the list
+# thread to update the list
 def update_traffic_data():
     global traffic_data
     while True:
@@ -67,10 +72,11 @@ def update_traffic_data():
 
         time.sleep(10)
 
+
 def verify_hmac(request):
     received_hmac = request.headers.get("X-HMAC-Signature")
     timestamp = request.headers.get("X-Timestamp")
-    
+
     if not received_hmac or not timestamp:
         return False
 
@@ -87,10 +93,11 @@ def verify_hmac(request):
 
     message = f"{timestamp}".encode()
     expected_hmac = hmac.new(SHARED_SECRET.encode(), message, hashlib.sha256).hexdigest()
-    print("Expected Hmac: " +expected_hmac)
+    print("Expected Hmac: " + expected_hmac)
     return hmac.compare_digest(received_hmac, expected_hmac)
 
-#matching json with , and : so it'll be received right on the frontend
+
+# matching json with , and : so it'll be received right on the frontend
 def generate_response_hmac(response_json):
     # Ensure key ordering and compact JSON format
     message = json.dumps(response_json, separators=(',', ':'), sort_keys=True, ensure_ascii=False).encode('utf-8')
@@ -105,12 +112,12 @@ def get_traffic_data():
         return jsonify({"error": "Unauthorized"}), 403
 
     response_timestamp = str(int(time.time()))
-    #telling main thread to not use traffic_data list while being updated
+    # telling main thread to not use traffic_data list while being updated
     with data_lock:
         try:
             response_json = {"data": traffic_data, "timestamp": response_timestamp}
             response_hmac = generate_response_hmac(response_json)
-            #print(response_hmac)
+            # print(response_hmac)
             return jsonify({
                 "data": traffic_data,
                 "timestamp": response_timestamp,
@@ -118,6 +125,7 @@ def get_traffic_data():
             })
         except Exception as e:
             return jsonify({"error": "Unable to Fulfill Request"}), 500
+
 
 if __name__ == "__main__":
     threading.Thread(target=update_traffic_data, daemon=True).start()
