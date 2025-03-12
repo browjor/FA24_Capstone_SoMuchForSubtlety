@@ -28,15 +28,15 @@ export default function Map({ center, zoom, trafficData = [] }) {
                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
                 {/* Render markers if trafficData is valid */}
-                {trafficData.data.map(({ density, lat, lon }, index) => (
-                    <CircleMarker
-                        key={index}
-                        center={[lat, lon]}
-                        radius={Math.max(density / 10, 5)} // Prevents markers from being too small
-                        fillOpacity={0.6}
-                        color={getColor(density)} // Apply dynamic color
-                    />
-                ))}
+                {trafficData.map(({ density, latitude, longitude }, index) => (
+                <CircleMarker
+                    key={`${index}-${density}`} // Ensures re-render when density changes
+                    center={[parseFloat(latitude), parseFloat(longitude)]}
+                    radius={Math.max(density * 10, 5)}
+                    fillOpacity={0.6}
+                    color={getColor(density)}
+                />
+            ))}
             </MapContainer>
         </div>
     );
