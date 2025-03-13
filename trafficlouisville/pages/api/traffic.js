@@ -2,8 +2,7 @@ import crypto from "crypto";
 import axios from "axios";
 
 const SECRET_KEY = process.env.SHARED_SECRET;
-const apiPath = "/latest-traffic";
-const BACKEND_URL = `http://${process.env.BACKEND_SERVER_IPV4}:${process.env.BACKEND_SERVER_PORT}${apiPath}`;
+const BACKEND_URL = `${process.env.DOMAIN_NAME}/${process.env.API_ENDPOINT}`;
 
 function verifyResponseHMAC(unformatted, timestamp, receivedHMAC) {
     const data = unformatted.map(entry => ({
