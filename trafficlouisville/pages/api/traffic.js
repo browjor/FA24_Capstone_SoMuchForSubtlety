@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import axios from "axios";
 
-const SECRET_KEY = process.env.SHARED_SECRET;
+const SECRET_KEY = process.env.SHARED_KEY;
 const BACKEND_URL = `${process.env.DOMAIN_NAME}/${process.env.API_ENDPOINT}`;
 
 function verifyResponseHMAC(unformatted, timestamp, receivedHMAC) {
