@@ -11,7 +11,7 @@ const DEFAULT_CENTER = [38.2469, -85.7664];
 
 export async function getServerSideProps() {
     try {
-        const response = await fetch(`http://localhost:3000/api/traffic`);
+        const response = await fetch(`${process.env.DOMAIN_NAME}/${process.env.API_ENDPOINT}`);
         const trafficData = await response.json();
 
         return { props: { trafficData } };
