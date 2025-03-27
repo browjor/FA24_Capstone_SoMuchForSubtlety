@@ -25,7 +25,6 @@ for camera in all_cameras:
             max_traffic_time= current_timestamp
         )
         session.add(traffic_count)
-        time.sleep(2)
 
 session.commit()
 session.close()
