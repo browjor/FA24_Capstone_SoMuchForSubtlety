@@ -29,7 +29,7 @@ export default function Map({ center, zoom, trafficData = [] }) {
                 className="flex"
                 center={center}
                 zoom={zoom}
-                style={{ height: "100%", width: "100%" }}
+                style={{ height: "100%", width: "100%", borderRadius: "12px", overflow: "hidden" }}
             >
                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
@@ -38,8 +38,8 @@ export default function Map({ center, zoom, trafficData = [] }) {
                     <CircleMarker
                         key={index}
                         center={[lat, lon]}
-                        radius={Math.max(density / 10, 5)} // Prevents markers from being too small
-                        fillOpacity={0.6}
+                        radius={Math.max(density / 10, 6.7)} // Prevents markers from being too small
+                        fillOpacity={1}
                         color={getColor(density)}
                     />
                 ))}
