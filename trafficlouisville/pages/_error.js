@@ -1,6 +1,7 @@
-// pages/_error.js
+"use client"
+
 function Error({ statusCode }) {
-    if (statusCode === 504) {
+    if (statusCode >= 500 && statusCode < 600) {
       return (
         <div style={{ padding: '2rem', textAlign: 'center' }}>
           <h1>504 Gateway Timeout</h1>
