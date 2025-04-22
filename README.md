@@ -1,18 +1,20 @@
-# 2024 Capstone Project - TrafficLouisville
+# 2024/2025 Capstone Project - TrafficLouisville
 
 ## Team Name: *So Much For Subtlety*
 - John Brown
 - Aaron O'Brien
 - Mason Napper
 
-Our project is called TrafficLouisville, a system that aims to give timely information about the density of traffic on the major highways of Louisville, KY through a simple map interface that can be accessed through the Internet. TrafficLouisville will not be a commercial system, although it could be monetized through ad-revenue, and is not intended to be used in critical applications. Traffic Louisville is an academic project that illustrates potential applications of software development and machine learning applications.
+
+Our capstone project, TrafficLouisville, aims to provide near-real time traffic density visualization for Louisville Metro Highways. Through KYTC highway camera images available over the web, machine learning object detection via YOLOv8, and a custom full stack web architecture, we have developed TrafficLouisville to present an intuitive map that can be used for traffic estimation and analytics.
+
+Installation instructions can be found in INSTALLATION.txt 
+
 
 ### Project Description
-- TrafficLouisville can be characterized as a multi-component hardware software system consisting of a Python-Flask server (the backend) hosted on personally-owned software that will communicate with a web application hosted on Vercel, a cloud platform (the frontend).
-- For a data source, TrafficLouisville will download images obtained from public cameras owned by KYTC (Kentucky Transportation Cabinet) at their respective URLs, at a total request rate of one image every five seconds. Each request will be for a different camera, with a queue that spans roughly fifty cameras, meaning that the refresh rate for our map will be five minutes for a particular camera on a section of highway.
-- The backend server will download an image, and queue it for processing with machine learning, specifically Yolov8 image classification. In terms of preparing Yolov8 for classifying particular images, training will be needed to generate a set of model-weights for each specific camera viewpoint, and calibrated for day/night/rain conditions.
-- After an estimate of how many vehicles are on the road is compared with baselines and a density figure is generated, the server will send the data for a specific camera to the Vercel-hosted frontend. Here, a heat-map or other relevant map will show the data.
-- For the purpose of security, we plan on implementing a reverse proxy that will be used to secure the backend server and frontend.
+
+TrafficLouisville is designed as multiple independent processes (Python) connected by a database (SQLite) within the backend machine, while a reverse proxy (Caddy) connects the remote frontend (Vercel/React) with the backend server (Flask/Python). Write/read locks among the connections to the database enforce coordination among the backend processes. Secure communications are prioritized via HTTPS, a reverse proxy, and HMAC signature verification of requests and responses between the frontend and backend. Upon request from a browser client, the frontend requests the data for populating the map from the backend, authenticates it, and serves it to the browser client.
+
 
 - 
 ![RF3_ComponentDiagram drawio](https://github.com/user-attachments/assets/7fa235c9-0c6b-449c-bf97-b6e43ee4bf0d)
